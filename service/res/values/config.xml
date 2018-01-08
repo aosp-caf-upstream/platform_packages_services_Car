@@ -42,15 +42,10 @@
         <!--  call and media to physical stream 0 while all others go to physical stream 1 -->
         <item>"0:call,media,radio,unknown#1:nav_guidance,voice_command,alarm,notification,system,safety"</item>
     </string-array>
-    <!-- Timeout value in Ms for audio focus wait. Audio focus request not responsed within
-         this value will be treated as timeout and audio focus will be reset to LOSS state. -->
-    <integer name="audioFocusWaitTimeoutMs">1000</integer>
     <!--  Configuration to enable usage of dynamic audio routing. If this is set to false,
           dynamic audio routing is disabled and audio works in legacy mode. It may be useful
           during initial development where audio hal does not support bus based addressing yet. -->
     <bool name="audioUseDynamicRouting">true</bool>
-    <!-- Number of audio focus timeouts that indicate vehicle CAN bus failure. -->
-    <integer name="consecutiveHalFailures">3</integer>
     <!-- Whether to block other audio while media audio is muted with display off. When set to true,
          other sounds cannot be played either while display is off. If false, only media is muted
          and other sounds can be still played. -->
@@ -73,7 +68,7 @@
           Besides this, system apps with car app meta data will be auto whitelisted. -->
     <string name="defauiltActivityWhitelist">android,com.android.systemui</string>
     <!-- Default home activity -->
-    <string name="defaultHomeActivity">com.android.car.overview/com.android.car.overview.StreamOverviewActivity</string>
+    <string name="defaultHomeActivity"><!--com.your.package/com.your.package.Activity--></string>
     <!--  The com.android.car.VmsPublisherService will bind to this list of clients -->
     <string-array translatable="false" name="vmsPublisherClients">
     </string-array>
@@ -103,6 +98,31 @@
 
     <!-- The number of I/O metrics samples to keep in memory at one time.
          The system will keep a sliding window of samples of this size, and allow
-         retrieval of activity this many sample windows back in time. -->
-    <integer name="ioStatsNumSamplesToStore">15</integer>
+         retrieval of activity this many sample windows back in time. Setting this to
+         0 means no samples will be collected, effectively disabling I/O metric collection. -->
+    <integer name="ioStatsNumSamplesToStore">0</integer>
+
+    <!-- The maximum number of KB (1024 bytes) that can be written to storage in one sample
+         before CarService deems I/O activity excessive. A simple way to set this value
+         is - given the total writable amount (storage size * P/E cycles) - to make
+         reasonable assumptions about the expected lifetime of the vehicle and the average
+         daily driving time, and use that to allocate a per-sample budget. -->
+    <integer name="acceptableWrittenKBytesPerSample">0</integer>
+    <!-- The maximum number of fsync() system calls that can be made in one sample before
+         CarService deems I/O activity excessive. -->
+    <integer name="acceptableFsyncCallsPerSample">0</integer>
+
+    <!-- The maximum number of samples (within an I/O stats sample window) that CarService
+         should consider exhibiting excessive I/O activity before broadcasting an intent
+         to signal the potential for flash wear. -->
+    <integer name="maxExcessiveIoSamplesInWindow">0</integer>
+
+    <!-- The name of an intent to be notified by CarService whenever it detects too many
+         samples with excessive I/O activity. Value must either be an empty string, which
+         means that no notification will take place, or be in the format of a flattened
+         ComponentName and reference a valid BroadcastReceiver. This broadcast receiver
+         must be registered in its containing app's AndroidManifest.xml and it is
+         strongly recommended that it be protected with the
+         android.car.permission.STORAGE_MONITORING permission. -->
+    <string name="intentReceiverForUnacceptableIoMetrics"></string>
 </resources>

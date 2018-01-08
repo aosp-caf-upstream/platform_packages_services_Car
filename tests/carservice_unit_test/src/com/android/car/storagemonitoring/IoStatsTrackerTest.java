@@ -16,8 +16,8 @@
 
 package com.android.car.storagemonitoring;
 
-import android.car.storagemonitoring.UidIoStats;
-import android.car.storagemonitoring.UidIoStatsRecord;
+import android.car.storagemonitoring.IoStatsEntry;
+import android.car.storagemonitoring.UidIoRecord;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.SparseArray;
 import com.android.car.procfsinspector.ProcessInfo;
@@ -35,7 +35,7 @@ import junit.framework.TestCase;
 @MediumTest
 public class IoStatsTrackerTest extends TestCase {
     private static final int SAMPLE_WINDOW_MS = 1000;
-    private static final List<UidIoStats> EMPTY = Collections.emptyList();
+    private static final List<IoStatsEntry> EMPTY = Collections.emptyList();
     private static final String TAG = IoStatsTrackerTest.class.getSimpleName();
 
     public void testNewUsersAppear() throws Exception {
@@ -54,8 +54,8 @@ public class IoStatsTrackerTest extends TestCase {
         user1.foreground_rchar = 30;
         user1.background_wchar = 50;
 
-        UidIoStatsRecord process0 = user0.updateSystemState(mockSystemStateInterface);
-        UidIoStatsRecord process1 = user1.updateSystemState(mockSystemStateInterface);
+        UidIoRecord process0 = user0.updateSystemState(mockSystemStateInterface);
+        UidIoRecord process1 = user1.updateSystemState(mockSystemStateInterface);
 
         ioStatsTracker.update(mockSystemStateInterface.mIoRecords);
 
@@ -83,14 +83,14 @@ public class IoStatsTrackerTest extends TestCase {
 
         user0.foreground_rchar = 60;
         user0.foreground_wchar = 10;
-        UidIoStatsRecord process0 = user0.updateSystemState(mockSystemStateInterface);
+        UidIoRecord process0 = user0.updateSystemState(mockSystemStateInterface);
         ioStatsTracker.update(mockSystemStateInterface.mIoRecords);
 
         assertEquals(1, ioStatsTracker.getCurrentSample().size());
         assertEquals(1, ioStatsTracker.getTotal().size());
 
-        UidIoStats sample0 = ioStatsTracker.getCurrentSample().get(0);
-        UidIoStats total0 = ioStatsTracker.getTotal().get(0);
+        IoStatsEntry sample0 = ioStatsTracker.getCurrentSample().get(0);
+        IoStatsEntry total0 = ioStatsTracker.getTotal().get(0);
 
         assertNotNull(sample0);
         assertNotNull(total0);
@@ -121,8 +121,8 @@ public class IoStatsTrackerTest extends TestCase {
         assertEquals(1, ioStatsTracker.getCurrentSample().size());
         assertEquals(1, ioStatsTracker.getTotal().size());
 
-        UidIoStats sample0 = ioStatsTracker.getCurrentSample().get(0);
-        UidIoStats total0 = ioStatsTracker.getTotal().get(0);
+        IoStatsEntry sample0 = ioStatsTracker.getCurrentSample().get(0);
+        IoStatsEntry total0 = ioStatsTracker.getTotal().get(0);
 
         assertEquals(2 * SAMPLE_WINDOW_MS, sample0.runtimeMillis);
         assertEquals(2 * SAMPLE_WINDOW_MS, total0.runtimeMillis);
@@ -144,13 +144,13 @@ public class IoStatsTrackerTest extends TestCase {
         ioStatsTracker.update(mockSystemStateInterface.mIoRecords);
 
         user0.killProcess();
-        UidIoStatsRecord record0 = user0.updateSystemState(mockSystemStateInterface);
+        UidIoRecord record0 = user0.updateSystemState(mockSystemStateInterface);
         ioStatsTracker.update(mockSystemStateInterface.mIoRecords);
 
         assertEquals(0, ioStatsTracker.getCurrentSample().size());
         assertEquals(1, ioStatsTracker.getTotal().size());
 
-        UidIoStats total0 = ioStatsTracker.getTotal().get(0);
+        IoStatsEntry total0 = ioStatsTracker.getTotal().get(0);
         assertEquals(SAMPLE_WINDOW_MS, total0.runtimeMillis);
         assertTrue(total0.representsSameMetrics(record0));
     }
@@ -168,14 +168,14 @@ public class IoStatsTrackerTest extends TestCase {
         ioStatsTracker.update(mockSystemStateInterface.mIoRecords);
 
         user0.foreground_rchar = 60;
-        UidIoStatsRecord record0 = user0.updateSystemState(mockSystemStateInterface);
+        UidIoRecord record0 = user0.updateSystemState(mockSystemStateInterface);
         ioStatsTracker.update(mockSystemStateInterface.mIoRecords);
 
         assertEquals(1, ioStatsTracker.getCurrentSample().size());
         assertEquals(1, ioStatsTracker.getTotal().size());
 
-        UidIoStats sample0 = ioStatsTracker.getCurrentSample().get(0);
-        UidIoStats total0 = ioStatsTracker.getTotal().get(0);
+        IoStatsEntry sample0 = ioStatsTracker.getCurrentSample().get(0);
+        IoStatsEntry total0 = ioStatsTracker.getTotal().get(0);
 
         assertTrue(total0.representsSameMetrics(record0));
         assertEquals(2 * SAMPLE_WINDOW_MS, total0.runtimeMillis);
@@ -206,7 +206,7 @@ public class IoStatsTrackerTest extends TestCase {
         ioStatsTracker.update(mockSystemStateInterface.mIoRecords);
 
         assertEquals(1, ioStatsTracker.getCurrentSample().size());
-        UidIoStats sample0 = ioStatsTracker.getCurrentSample().get(0);
+        IoStatsEntry sample0 = ioStatsTracker.getCurrentSample().get(0);
         assertEquals(2 * SAMPLE_WINDOW_MS, sample0.runtimeMillis);
     }
 
@@ -234,7 +234,7 @@ public class IoStatsTrackerTest extends TestCase {
 
         assertEquals(1, ioStatsTracker.getCurrentSample().size());
 
-        UidIoStats sample0 = ioStatsTracker.getCurrentSample().get(0);
+        IoStatsEntry sample0 = ioStatsTracker.getCurrentSample().get(0);
         assertEquals(2 * SAMPLE_WINDOW_MS, sample0.runtimeMillis);
         assertEquals(1, sample0.foreground.fsyncCalls);
     }
@@ -266,8 +266,8 @@ public class IoStatsTrackerTest extends TestCase {
             mHasProcess = false;
         }
 
-        UidIoStatsRecord updateSystemState(MockSystemStateInterface systemState) {
-            UidIoStatsRecord uidIoStatsRecord = new UidIoStatsRecord(mUid,
+        UidIoRecord updateSystemState(MockSystemStateInterface systemState) {
+            UidIoRecord uidIoRecord = new UidIoRecord(mUid,
                 foreground_rchar,
                 foreground_wchar,
                 foreground_read_bytes,
@@ -279,20 +279,20 @@ public class IoStatsTrackerTest extends TestCase {
                 background_write_bytes,
                 background_fsync);
 
-            systemState.addIoRecord(uidIoStatsRecord);
+            systemState.addIoRecord(uidIoRecord);
             if (mHasProcess) {
                 systemState.addProcess(new ProcessInfo(1, mUid));
             } else {
                 systemState.removeUserProcesses(mUid);
             }
 
-            return uidIoStatsRecord;
+            return uidIoRecord;
         }
     }
 
     private final class MockSystemStateInterface implements SystemStateInterface {
         private final List<ProcessInfo> mProcesses = new ArrayList<>();
-        private final SparseArray<UidIoStatsRecord> mIoRecords = new SparseArray<>();
+        private final SparseArray<UidIoRecord> mIoRecords = new SparseArray<>();
 
         @Override
         public void shutdown() {
@@ -330,7 +330,7 @@ public class IoStatsTrackerTest extends TestCase {
                     mProcesses.stream().filter(pi -> pi.uid == uid).collect(Collectors.toList()));
         }
 
-        synchronized void addIoRecord(UidIoStatsRecord record) {
+        synchronized void addIoRecord(UidIoRecord record) {
             mIoRecords.put(record.uid, record);
         }
 

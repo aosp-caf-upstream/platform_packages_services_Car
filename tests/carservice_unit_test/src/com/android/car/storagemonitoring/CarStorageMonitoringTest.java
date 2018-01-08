@@ -16,9 +16,9 @@
 
 package com.android.car.storagemonitoring;
 
-import android.car.storagemonitoring.UidIoStats;
-import android.car.storagemonitoring.UidIoStats.PerStateMetrics;
-import android.car.storagemonitoring.UidIoStatsRecord;
+import android.car.storagemonitoring.IoStatsEntry;
+import android.car.storagemonitoring.IoStats;
+import android.car.storagemonitoring.UidIoRecord;
 import android.car.storagemonitoring.WearEstimate;
 import android.car.storagemonitoring.WearEstimateChange;
 import android.os.Parcel;
@@ -34,6 +34,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import junit.framework.TestCase;
 import org.json.JSONObject;
@@ -284,12 +285,12 @@ public class CarStorageMonitoringTest extends TestCase {
             ProcfsUidIoStatsProvider statsProvider = new ProcfsUidIoStatsProvider(
                     statsFile.getPath());
 
-            SparseArray<UidIoStatsRecord> entries = statsProvider.load();
+            SparseArray<UidIoRecord> entries = statsProvider.load();
 
             assertNotNull(entries);
             assertEquals(2, entries.size());
 
-            UidIoStats entry = new UidIoStats(entries.get(0), 1234);
+            IoStatsEntry entry = new IoStatsEntry(entries.get(0), 1234);
             assertNotNull(entry);
             assertEquals(0, entry.uid);
             assertEquals(1234, entry.runtimeMillis);
@@ -304,7 +305,7 @@ public class CarStorageMonitoringTest extends TestCase {
             assertEquals(0, entry.background.bytesWrittenToStorage);
             assertEquals(0, entry.background.fsyncCalls);
 
-            entry = new UidIoStats(entries.get(1006), 4321);
+            entry = new IoStatsEntry(entries.get(1006), 4321);
             assertNotNull(entry);
             assertEquals(1006, entry.uid);
             assertEquals(4321, entry.runtimeMillis);
@@ -329,7 +330,7 @@ public class CarStorageMonitoringTest extends TestCase {
             ProcfsUidIoStatsProvider statsProvider = new ProcfsUidIoStatsProvider(
                 statsFile.getPath());
 
-            SparseArray<UidIoStatsRecord> entries = statsProvider.load();
+            SparseArray<UidIoRecord> entries = statsProvider.load();
 
             assertNull(entries);
         }
@@ -343,28 +344,28 @@ public class CarStorageMonitoringTest extends TestCase {
             ProcfsUidIoStatsProvider statsProvider = new ProcfsUidIoStatsProvider(
                 statsFile.getPath());
 
-            SparseArray<UidIoStatsRecord> entries = statsProvider.load();
+            SparseArray<UidIoRecord> entries = statsProvider.load();
 
             assertNull(entries);
         }
     }
 
     public void testUidIoStatEntryEquality() throws Exception {
-        UidIoStats statEntry1 = new UidIoStats(10, 1234,
-            new PerStateMetrics(10, 20, 30, 40, 50),
-            new PerStateMetrics(100, 200, 300, 400, 500));
-        UidIoStats statEntry2 = new UidIoStats(10, 1234,
-            new PerStateMetrics(10, 20, 30, 40, 50),
-            new PerStateMetrics(100, 200, 300, 400, 500));
-        UidIoStats statEntry3 = new UidIoStats(30, 4567,
-            new PerStateMetrics(1, 20, 30, 42, 50),
-            new PerStateMetrics(10, 200, 300, 420, 500));
-        UidIoStats statEntry4 = new UidIoStats(11, 6541,
-            new PerStateMetrics(10, 20, 30, 40, 50),
-            new PerStateMetrics(100, 200, 300, 400, 500));
-        UidIoStats statEntry5 = new UidIoStats(10, 1234,
-            new PerStateMetrics(10, 20, 30, 40, 0),
-            new PerStateMetrics(100, 200, 300, 400, 500));
+        IoStatsEntry statEntry1 = new IoStatsEntry(10, 1234,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(100, 200, 300, 400, 500));
+        IoStatsEntry statEntry2 = new IoStatsEntry(10, 1234,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(100, 200, 300, 400, 500));
+        IoStatsEntry statEntry3 = new IoStatsEntry(30, 4567,
+            new IoStatsEntry.Metrics(1, 20, 30, 42, 50),
+            new IoStatsEntry.Metrics(10, 200, 300, 420, 500));
+        IoStatsEntry statEntry4 = new IoStatsEntry(11, 6541,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(100, 200, 300, 400, 500));
+        IoStatsEntry statEntry5 = new IoStatsEntry(10, 1234,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 0),
+            new IoStatsEntry.Metrics(100, 200, 300, 400, 500));
 
         assertEquals(statEntry1, statEntry1);
         assertEquals(statEntry1, statEntry2);
@@ -374,47 +375,47 @@ public class CarStorageMonitoringTest extends TestCase {
     }
 
     public void testUidIoStatEntryParcel() throws Exception {
-        UidIoStats statEntry = new UidIoStats(10, 5000,
-            new PerStateMetrics(10, 20, 30, 40, 50),
-            new PerStateMetrics(100, 200, 300, 400, 500));
+        IoStatsEntry statEntry = new IoStatsEntry(10, 5000,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(100, 200, 300, 400, 500));
         Parcel p = Parcel.obtain();
         statEntry.writeToParcel(p, 0);
         p.setDataPosition(0);
-        UidIoStats other = new UidIoStats(p);
+        IoStatsEntry other = new IoStatsEntry(p);
         assertEquals(other, statEntry);
     }
 
     public void testUidIoStatEntryJson() throws Exception {
         try (TemporaryFile temporaryFile = new TemporaryFile(TAG)) {
-            UidIoStats statEntry = new UidIoStats(10, 1200,
-                new PerStateMetrics(10, 20, 30, 40, 50),
-                new PerStateMetrics(100, 200, 300, 400, 500));
+            IoStatsEntry statEntry = new IoStatsEntry(10, 1200,
+                new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+                new IoStatsEntry.Metrics(100, 200, 300, 400, 500));
             try (JsonWriter jsonWriter = new JsonWriter(new FileWriter(temporaryFile.getFile()))) {
                 statEntry.writeToJson(jsonWriter);
             }
             JSONObject jsonObject = new JSONObject(
                 new String(Files.readAllBytes(temporaryFile.getPath())));
-            UidIoStats other = new UidIoStats(jsonObject);
+            IoStatsEntry other = new IoStatsEntry(jsonObject);
             assertEquals(statEntry, other);
         }
     }
 
 
     public void testUidIoStatEntryDelta() throws Exception {
-        UidIoStats statEntry1 = new UidIoStats(10, 1000,
-            new PerStateMetrics(10, 20, 30, 40, 50),
-            new PerStateMetrics(60, 70, 80, 90, 100));
+        IoStatsEntry statEntry1 = new IoStatsEntry(10, 1000,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(60, 70, 80, 90, 100));
 
-        UidIoStats statEntry2 = new UidIoStats(10,2000,
-            new PerStateMetrics(110, 120, 130, 140, 150),
-            new PerStateMetrics(260, 370, 480, 500, 110));
+        IoStatsEntry statEntry2 = new IoStatsEntry(10,2000,
+            new IoStatsEntry.Metrics(110, 120, 130, 140, 150),
+            new IoStatsEntry.Metrics(260, 370, 480, 500, 110));
 
-        UidIoStats statEntry3 = new UidIoStats(30, 3000,
-            new PerStateMetrics(10, 20, 30, 40, 50),
-            new PerStateMetrics(100, 200, 300, 400, 500));
+        IoStatsEntry statEntry3 = new IoStatsEntry(30, 3000,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(100, 200, 300, 400, 500));
 
 
-        UidIoStats delta21 = statEntry2.delta(statEntry1);
+        IoStatsEntry delta21 = statEntry2.delta(statEntry1);
         assertNotNull(delta21);
         assertEquals(statEntry1.uid, delta21.uid);
 
@@ -432,7 +433,7 @@ public class CarStorageMonitoringTest extends TestCase {
         assertEquals(10, delta21.background.fsyncCalls);
 
         try {
-            UidIoStats delta31 = statEntry3.delta(statEntry1);
+            IoStatsEntry delta31 = statEntry3.delta(statEntry1);
             fail("delta only allowed on stats for matching user ID");
         } catch (IllegalArgumentException e) {
             // test passed
@@ -440,15 +441,15 @@ public class CarStorageMonitoringTest extends TestCase {
     }
 
     public void testUidIoStatsRecordDelta() throws Exception {
-        UidIoStats statEntry = new UidIoStats(10, 1000,
-            new PerStateMetrics(10, 20, 30, 40, 50),
-            new PerStateMetrics(60, 70, 80, 90, 100));
+        IoStatsEntry statEntry = new IoStatsEntry(10, 1000,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(60, 70, 80, 90, 100));
 
-        UidIoStatsRecord statRecord = new UidIoStatsRecord(10,
+        UidIoRecord statRecord = new UidIoRecord(10,
             20, 20, 30, 50, 70,
             80, 70, 80, 100, 110);
 
-        UidIoStatsRecord delta = statRecord.delta(statEntry);
+        UidIoRecord delta = statRecord.delta(statEntry);
 
         assertNotNull(delta);
         assertEquals(statRecord.uid, delta.uid);
@@ -465,7 +466,7 @@ public class CarStorageMonitoringTest extends TestCase {
         assertEquals(10, delta.background_write_bytes);
         assertEquals(10, delta.background_fsync);
 
-        statRecord = new UidIoStatsRecord(30,
+        statRecord = new UidIoRecord(30,
             20, 20, 30, 50, 70,
             80, 70, 80, 100, 110);
 
@@ -474,6 +475,135 @@ public class CarStorageMonitoringTest extends TestCase {
             fail("delta only allowed on records for matching user ID");
         } catch (IllegalArgumentException e) {
             // test passed
+        }
+    }
+
+    public void testUidIoStatsDelta() throws Exception {
+        IoStatsEntry entry10 = new IoStatsEntry(10, 1000,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(60, 70, 80, 90, 100));
+
+        IoStatsEntry entry20 = new IoStatsEntry(20, 2000,
+            new IoStatsEntry.Metrics(200, 60, 100, 30, 40),
+            new IoStatsEntry.Metrics(20, 10, 20, 0, 0));
+
+        IoStatsEntry entry30 = new IoStatsEntry(30, 2000,
+            new IoStatsEntry.Metrics(50, 100, 100, 30, 40),
+            new IoStatsEntry.Metrics(30, 0, 0, 0, 0));
+
+        ArrayList<IoStatsEntry> statsEntries1 = new ArrayList<IoStatsEntry>() {{
+            add(entry10);
+            add(entry20);
+        }};
+
+        ArrayList<IoStatsEntry> statsEntries2 = new ArrayList<IoStatsEntry>() {{
+            add(entry20);
+            add(entry30);
+        }};
+
+        IoStats delta1 = new IoStats(statsEntries1, 5000);
+        IoStats delta2 = new IoStats(statsEntries1, 5000);
+        IoStats delta3 = new IoStats(statsEntries2, 3000);
+        IoStats delta4 = new IoStats(statsEntries1, 5000);
+
+        assertEquals(delta1, delta1);
+        assertEquals(delta1, delta2);
+        assertNotSame(delta1, delta3);
+        assertNotSame(delta3, delta4);
+    }
+
+    public void testUidIoStatsTotals() throws Exception {
+        IoStatsEntry entry10 = new IoStatsEntry(10, 1000,
+            new IoStatsEntry.Metrics(20, 0, 10, 0, 0),
+            new IoStatsEntry.Metrics(10, 50, 0, 20, 2));
+
+        IoStatsEntry entry20 = new IoStatsEntry(20, 1000,
+            new IoStatsEntry.Metrics(100, 200, 50, 200, 1),
+            new IoStatsEntry.Metrics(0, 30, 10, 0, 1));
+
+        ArrayList<IoStatsEntry> statsEntries = new ArrayList<IoStatsEntry>() {{
+            add(entry10);
+            add(entry20);
+        }};
+
+        IoStats delta = new IoStats(statsEntries, 5000);
+
+        IoStatsEntry.Metrics foregroundTotals = delta.getForegroundTotals();
+        IoStatsEntry.Metrics backgroundTotals = delta.getBackgroundTotals();
+        IoStatsEntry.Metrics overallTotals = delta.getTotals();
+
+        assertEquals(120, foregroundTotals.bytesRead);
+        assertEquals(200, foregroundTotals.bytesWritten);
+        assertEquals(60, foregroundTotals.bytesReadFromStorage);
+        assertEquals(200, foregroundTotals.bytesWrittenToStorage);
+        assertEquals(1, foregroundTotals.fsyncCalls);
+
+
+        assertEquals(10, backgroundTotals.bytesRead);
+        assertEquals(80, backgroundTotals.bytesWritten);
+        assertEquals(10, backgroundTotals.bytesReadFromStorage);
+        assertEquals(20, backgroundTotals.bytesWrittenToStorage);
+        assertEquals(3, backgroundTotals.fsyncCalls);
+
+        assertEquals(130, overallTotals.bytesRead);
+        assertEquals(280, overallTotals.bytesWritten);
+        assertEquals(70, overallTotals.bytesReadFromStorage);
+        assertEquals(220, overallTotals.bytesWrittenToStorage);
+        assertEquals(4, overallTotals.fsyncCalls);
+    }
+
+    public void testUidIoStatsDeltaParcel() throws Exception {
+        IoStatsEntry entry10 = new IoStatsEntry(10, 1000,
+            new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+            new IoStatsEntry.Metrics(60, 70, 80, 90, 100));
+
+        IoStatsEntry entry20 = new IoStatsEntry(20, 2000,
+            new IoStatsEntry.Metrics(200, 60, 100, 30, 40),
+            new IoStatsEntry.Metrics(20, 10, 20, 0, 0));
+
+        ArrayList<IoStatsEntry> statsEntries = new ArrayList<IoStatsEntry>() {{
+            add(entry10);
+            add(entry20);
+        }};
+
+        IoStats statsDelta = new IoStats(statsEntries, 5000);
+
+        Parcel p = Parcel.obtain();
+        statsDelta.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        IoStats parceledStatsDelta = new IoStats(p);
+
+        assertEquals(statsDelta.getTimestamp(), parceledStatsDelta.getTimestamp());
+
+        assertEquals(2, parceledStatsDelta.getStats().stream()
+                .filter(e -> e.equals(entry10) || e.equals(entry20))
+                .count());
+    }
+
+    public void testUidIoStatsDeltaJson() throws Exception {
+        try (TemporaryFile temporaryFile = new TemporaryFile(TAG)) {
+            IoStatsEntry entry10 = new IoStatsEntry(10, 1000,
+                new IoStatsEntry.Metrics(10, 20, 30, 40, 50),
+                new IoStatsEntry.Metrics(60, 70, 80, 90, 100));
+
+            IoStatsEntry entry20 = new IoStatsEntry(20, 2000,
+                new IoStatsEntry.Metrics(200, 60, 100, 30, 40),
+                new IoStatsEntry.Metrics(20, 10, 20, 0, 0));
+
+            ArrayList<IoStatsEntry> statsEntries = new ArrayList<IoStatsEntry>() {{
+                add(entry10);
+                add(entry20);
+            }};
+
+            IoStats statsDelta = new IoStats(statsEntries, 5000);
+            try (JsonWriter jsonWriter = new JsonWriter(new FileWriter(temporaryFile.getFile()))) {
+                statsDelta.writeToJson(jsonWriter);
+            }
+            JSONObject jsonObject = new JSONObject(
+                new String(Files.readAllBytes(temporaryFile.getPath())));
+            IoStats other = new IoStats(jsonObject);
+            assertEquals(statsDelta, other);
         }
     }
 }

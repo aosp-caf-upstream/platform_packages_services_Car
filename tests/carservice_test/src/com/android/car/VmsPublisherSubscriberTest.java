@@ -16,24 +16,24 @@
 
 package com.android.car;
 
-import static com.android.car.VmsPublisherClientServiceTest.javaClassToComponent;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import android.annotation.ArrayRes;
 import android.car.Car;
 import android.car.VehicleAreaType;
 import android.car.vms.VmsAssociatedLayer;
 import android.car.vms.VmsLayer;
 import android.car.vms.VmsSubscriberManager;
-import android.content.Context;
-import android.content.ContextWrapper;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
+import android.hardware.automotive.vehicle.V2_0.VehicleProperty;
 import android.hardware.automotive.vehicle.V2_0.VehiclePropertyAccess;
 import android.hardware.automotive.vehicle.V2_0.VehiclePropertyChangeMode;
-import android.hardware.automotive.vehicle.V2_0.VehicleProperty;
-import android.test.suitebuilder.annotation.MediumTest;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.android.car.vehiclehal.test.MockedVehicleHal;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+@RunWith(AndroidJUnit4.class)
 @MediumTest
 public class VmsPublisherSubscriberTest extends MockedCarTestBase {
     private static final int LAYER_ID = 88;
@@ -83,47 +84,17 @@ public class VmsPublisherSubscriberTest extends MockedCarTestBase {
                 .setSupportedAreas(VehicleAreaType.VEHICLE_AREA_TYPE_NONE);
     }
 
-    /**
-     * Creates a context with the resource vmsPublisherClients overridden. The overridden value
-     * contains the name of the test service defined also in this test package.
-     */
     @Override
-    protected Context getCarServiceContext() throws PackageManager.NameNotFoundException {
-        Context context = getContext()
-                .createPackageContext("com.android.car", Context.CONTEXT_IGNORE_SECURITY);
-        Resources resources = new Resources(context.getAssets(),
-                context.getResources().getDisplayMetrics(),
-                context.getResources().getConfiguration()) {
-            @Override
-            public String[] getStringArray(@ArrayRes int id) throws NotFoundException {
-                if (id == com.android.car.R.array.vmsPublisherClients) {
-                    return new String[] {
-                            javaClassToComponent(getContext(), VmsPublisherClientMockService.class)
-                    };
-                }
-
-                return super.getStringArray(id);
-            }
-        };
-        ContextWrapper wrapper = new ContextWrapper(context) {
-            @Override
-            public Resources getResources() {
-                return resources;
-            }
-        };
-        return wrapper;
+    protected synchronized void configureResourceOverrides(MockResources resources) {
+        resources.overrideResource(com.android.car.R.array.vmsPublisherClients,
+            new String[] { getFlattenComponent(VmsPublisherClientMockService.class) });
     }
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         mSubscriberSemaphore = new Semaphore(0);
         mAvailabilitySemaphore = new Semaphore(0);
-    }
-
-    @Override
-    protected synchronized void tearDown() throws Exception {
-        super.tearDown();
     }
 
     /**
@@ -134,6 +105,7 @@ public class VmsPublisherSubscriberTest extends MockedCarTestBase {
      * VmsPublisherClientMockService.onVmsSubscriptionChange. In turn, the mock service will publish
      * a message, which is validated in this test.
      */
+    @Test
     public void testPublisherToSubscriber() throws Exception {
         VmsSubscriberManager vmsSubscriberManager = (VmsSubscriberManager) getCar().getCarManager(
                 Car.VMS_SUBSCRIBER_SERVICE);
@@ -152,6 +124,7 @@ public class VmsPublisherSubscriberTest extends MockedCarTestBase {
      * publishers are assigned IDs, this test waits until the availability is changed which indicates
      * that the Mock service has gotten its ServiceReady and publisherId.
      */
+    @Test
     public void testPublisherInfo() throws Exception {
         VmsSubscriberManager vmsSubscriberManager = (VmsSubscriberManager) getCar().getCarManager(
                 Car.VMS_SUBSCRIBER_SERVICE);
@@ -171,6 +144,7 @@ public class VmsPublisherSubscriberTest extends MockedCarTestBase {
      * In this test the client subscribes to a layer and verifies that it gets the
      * notification that it is available.
      */
+    @Test
     public void testAvailabilityWithSubscription() throws Exception {
         VmsSubscriberManager vmsSubscriberManager = (VmsSubscriberManager) getCar().getCarManager(
             Car.VMS_SUBSCRIBER_SERVICE);
@@ -187,6 +161,7 @@ public class VmsPublisherSubscriberTest extends MockedCarTestBase {
      * test the client subscribes to a layer and verifies that it gets the notification that it
      * is available.
      */
+    @Test
     public void testAvailabilityWithoutSubscription() throws Exception {
         VmsSubscriberManager vmsSubscriberManager = (VmsSubscriberManager) getCar().getCarManager(
                 Car.VMS_SUBSCRIBER_SERVICE);

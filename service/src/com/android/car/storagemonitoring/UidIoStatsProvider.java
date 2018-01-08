@@ -16,10 +16,10 @@
 package com.android.car.storagemonitoring;
 
 import android.annotation.Nullable;
-import android.car.storagemonitoring.UidIoStatsRecord;
+import android.car.storagemonitoring.UidIoRecord;
 import android.util.SparseArray;
 
 public interface UidIoStatsProvider {
     @Nullable
-    SparseArray<UidIoStatsRecord> load();
+    SparseArray<UidIoRecord> load();
 }

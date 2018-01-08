@@ -27,14 +27,8 @@ import android.support.car.CarNotConnectedException;
 import android.support.car.hardware.CarSensorManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
-import android.view.HapticFeedbackConstants;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.Toast;
 
-import com.android.car.app.CarDrawerActivity;
-import com.android.car.app.CarDrawerAdapter;
-import com.android.car.app.DrawerItemViewHolder;
+import com.google.android.car.kitchensink.alertdialog.AlertDialogTestFragment;
 import com.google.android.car.kitchensink.assistant.CarAssistantFragment;
 import com.google.android.car.kitchensink.audio.AudioTestFragment;
 import com.google.android.car.kitchensink.bluetooth.BluetoothHeadsetFragment;
@@ -42,18 +36,26 @@ import com.google.android.car.kitchensink.bluetooth.MapMceTestFragment;
 import com.google.android.car.kitchensink.cluster.InstrumentClusterFragment;
 import com.google.android.car.kitchensink.cube.CubesTestFragment;
 import com.google.android.car.kitchensink.diagnostic.DiagnosticTestFragment;
+import com.google.android.car.kitchensink.displayinfo.DisplayInfoFragment;
 import com.google.android.car.kitchensink.hvac.HvacTestFragment;
 import com.google.android.car.kitchensink.input.InputTestFragment;
 import com.google.android.car.kitchensink.job.JobSchedulerFragment;
 import com.google.android.car.kitchensink.orientation.OrientationTestFragment;
+import com.google.android.car.kitchensink.power.PowerTestFragment;
 import com.google.android.car.kitchensink.radio.RadioTestFragment;
 import com.google.android.car.kitchensink.sensor.SensorsTestFragment;
 import com.google.android.car.kitchensink.setting.CarServiceSettingsActivity;
 import com.google.android.car.kitchensink.storagelifetime.StorageLifetimeFragment;
 import com.google.android.car.kitchensink.touch.TouchTestFragment;
+import com.google.android.car.kitchensink.vhal.VehicleHalFragment;
 import com.google.android.car.kitchensink.volume.VolumeTestFragment;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.car.drawer.CarDrawerActivity;
+import androidx.car.drawer.CarDrawerAdapter;
+import androidx.car.drawer.DrawerItemViewHolder;
 
 public class KitchenSinkActivity extends CarDrawerActivity {
     private static final String TAG = "KitchenSinkActivity";
@@ -133,22 +135,26 @@ public class KitchenSinkActivity extends CarDrawerActivity {
 
     private final List<MenuEntry> mMenuEntries = new ArrayList<MenuEntry>() {
         {
-            add("audio", AudioTestFragment.class);
-            add("hvac", HvacTestFragment.class);
-            add("job scheduler", JobSchedulerFragment.class);
-            add("inst cluster", InstrumentClusterFragment.class);
-            add("input test", InputTestFragment.class);
-            add("radio", RadioTestFragment.class);
+            add("alert window", AlertDialogTestFragment.class);
             add("assistant", CarAssistantFragment.class);
-            add("sensors", SensorsTestFragment.class);
-            add("diagnostic", DiagnosticTestFragment.class);
-            add("volume test", VolumeTestFragment.class);
-            add("touch test", TouchTestFragment.class);
-            add("cubes test", CubesTestFragment.class);
-            add("orientation test", OrientationTestFragment.class);
+            add("audio", AudioTestFragment.class);
             add("bluetooth headset",BluetoothHeadsetFragment.class);
             add("bluetooth messaging test", MapMceTestFragment.class);
+            add("cubes test", CubesTestFragment.class);
+            add("diagnostic", DiagnosticTestFragment.class);
+            add("display info", DisplayInfoFragment.class);
+            add("hvac", HvacTestFragment.class);
+            add("inst cluster", InstrumentClusterFragment.class);
+            add("input test", InputTestFragment.class);
+            add("job scheduler", JobSchedulerFragment.class);
+            add("orientation test", OrientationTestFragment.class);
+            add("power test", PowerTestFragment.class);
+            add("radio", RadioTestFragment.class);
+            add("sensors", SensorsTestFragment.class);
             add("storage lifetime", StorageLifetimeFragment.class);
+            add("touch test", TouchTestFragment.class);
+            add("volume test", VolumeTestFragment.class);
+            add("vehicle hal", VehicleHalFragment.class);
             add("car service settings", () -> {
                 Intent intent = new Intent(KitchenSinkActivity.this,
                     CarServiceSettingsActivity.class);
@@ -300,7 +306,7 @@ public class KitchenSinkActivity extends CarDrawerActivity {
 
             mMenuEntries.get(position).onClick();
 
-            closeDrawer();
+            getDrawerController().closeDrawer();
         }
     }
 }

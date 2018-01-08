@@ -20,10 +20,15 @@ import android.annotation.SystemApi;
 import android.car.Car;
 import android.car.CarManagerBase;
 import android.car.CarNotConnectedException;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import com.android.car.internal.SingleMessageHandler;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static android.car.CarApiUtil.checkCarNotConnectedExceptionFromCarService;
 
@@ -34,7 +39,34 @@ import static android.car.CarApiUtil.checkCarNotConnectedExceptionFromCarService
  */
 @SystemApi
 public final class CarStorageMonitoringManager implements CarManagerBase {
+    private static final String TAG = CarStorageMonitoringManager.class.getSimpleName();
+    private static final int MSG_IO_STATS_EVENT = 0;
+
     private final ICarStorageMonitoring mService;
+    private ListenerToService mListenerToService;
+    private final SingleMessageHandler<IoStats> mMessageHandler;
+    private final Set<IoStatsListener> mListeners = new HashSet<>();
+
+    public interface IoStatsListener {
+        void onSnapshot(IoStats snapshot);
+    }
+    private static final class ListenerToService extends IIoStatsListener.Stub {
+        private final WeakReference<CarStorageMonitoringManager> mManager;
+
+        ListenerToService(CarStorageMonitoringManager manager) {
+            mManager = new WeakReference<>(manager);
+        }
+
+        @Override
+        public void onSnapshot(IoStats snapshot) {
+            CarStorageMonitoringManager manager = mManager.get();
+            if (manager != null) {
+                manager.mMessageHandler.sendEvents(Collections.singletonList(snapshot));
+            }
+        }
+    }
+
+    public static final String INTENT_EXCESSIVE_IO = "android.car.storagemonitoring.EXCESSIVE_IO";
 
     public static final int PRE_EOL_INFO_UNKNOWN = 0;
     public static final int PRE_EOL_INFO_NORMAL = 1;
@@ -44,8 +76,16 @@ public final class CarStorageMonitoringManager implements CarManagerBase {
     /**
      * @hide
      */
-    public CarStorageMonitoringManager(IBinder service) {
+    public CarStorageMonitoringManager(IBinder service, Handler handler) {
         mService = ICarStorageMonitoring.Stub.asInterface(service);
+        mMessageHandler = new SingleMessageHandler<IoStats>(handler, MSG_IO_STATS_EVENT) {
+            @Override
+            protected void handleEvent(IoStats event) {
+                for (IoStatsListener listener : mListeners) {
+                    listener.onSnapshot(event);
+                }
+            }
+        };
     }
 
     /**
@@ -53,6 +93,8 @@ public final class CarStorageMonitoringManager implements CarManagerBase {
      */
     @Override
     public void onCarDisconnected() {
+        mListeners.clear();
+        mListenerToService = null;
     }
 
     // ICarStorageMonitoring forwards
@@ -131,7 +173,7 @@ public final class CarStorageMonitoringManager implements CarManagerBase {
      * If the information is not available, an empty list will be returned.
      */
     @RequiresPermission(value=Car.PERMISSION_STORAGE_MONITORING)
-    public List<UidIoStats> getBootIoStats() throws CarNotConnectedException {
+    public List<IoStatsEntry> getBootIoStats() throws CarNotConnectedException {
         try {
             return mService.getBootIoStats();
         } catch (IllegalStateException e) {
@@ -151,7 +193,7 @@ public final class CarStorageMonitoringManager implements CarManagerBase {
      * If the information is not available, an empty list will be returned.
      */
     @RequiresPermission(value=Car.PERMISSION_STORAGE_MONITORING)
-    public List<UidIoStats> getAggregateIoStats() throws CarNotConnectedException {
+    public List<IoStatsEntry> getAggregateIoStats() throws CarNotConnectedException {
         try {
             return mService.getAggregateIoStats();
         } catch (IllegalStateException e) {
@@ -162,4 +204,71 @@ public final class CarStorageMonitoringManager implements CarManagerBase {
         return Collections.emptyList();
     }
 
+    /**
+     * This method returns a list of the I/O stats deltas currently stored by the system.
+     *
+     * Periodically, the system gathers I/O activity metrics and computes and stores a delta from
+     * the previous cycle. The timing and the number of these stored samples are configurable
+     * by the OEM.
+     *
+     * The samples are returned in order from the oldest to the newest.
+     *
+     * If the information is not available, an empty list will be returned.
+     */
+    @RequiresPermission(value=Car.PERMISSION_STORAGE_MONITORING)
+    public List<IoStats> getIoStatsDeltas() throws CarNotConnectedException {
+        try {
+            return mService.getIoStatsDeltas();
+        } catch (IllegalStateException e) {
+            checkCarNotConnectedExceptionFromCarService(e);
+        } catch (RemoteException e) {
+            throw new CarNotConnectedException();
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * This method registers a new listener to receive I/O stats deltas.
+     *
+     * The system periodically gathers I/O activity metrics and computes a delta of such
+     * activity. Registered listeners will receive those deltas as they are available.
+     *
+     * The timing of availability of the deltas is configurable by the OEM.
+     */
+    @RequiresPermission(value=Car.PERMISSION_STORAGE_MONITORING)
+    public void registerListener(IoStatsListener listener) throws CarNotConnectedException {
+        try {
+            if (mListeners.isEmpty()) {
+                if (mListenerToService == null) {
+                    mListenerToService = new ListenerToService(this);
+                }
+                mService.registerListener(mListenerToService);
+            }
+            mListeners.add(listener);
+        } catch (IllegalStateException e) {
+            checkCarNotConnectedExceptionFromCarService(e);
+        } catch (RemoteException e) {
+            throw new CarNotConnectedException();
+        }
+    }
+
+    /**
+     * This method removes a registered listener of I/O stats deltas.
+     */
+    @RequiresPermission(value=Car.PERMISSION_STORAGE_MONITORING)
+    public void unregisterListener(IoStatsListener listener) throws CarNotConnectedException {
+        try {
+            if (!mListeners.remove(listener)) {
+                return;
+            }
+            if (mListeners.isEmpty()) {
+                mService.unregisterListener(mListenerToService);
+                mListenerToService = null;
+            }
+        } catch (IllegalStateException e) {
+            checkCarNotConnectedExceptionFromCarService(e);
+        } catch (RemoteException e) {
+            throw new CarNotConnectedException();
+        }
+    }
 }

@@ -19,7 +19,6 @@ import android.Manifest;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.support.annotation.IntDef;
 import android.support.annotation.RequiresPermission;
 import android.support.car.CarManagerBase;
@@ -96,46 +95,6 @@ public abstract class CarAudioManager implements CarManagerBase {
             throws CarNotConnectedException;
 
     /**
-     * Request audio focus. Send a request to obtain audio focus.
-     *
-     * @param listener The listener to be notified of audio focus changes.
-     * @param requestAttributes Obtained from {@link #getAudioAttributesForCarUsage(int)}.
-     * @param durationHint Use {@link AudioManager#AUDIOFOCUS_GAIN_TRANSIENT} to indicate this
-     * focus request is temporary and focus will be abandoned shortly. Examples of transient
-     * requests include playback of driving directions and notification sounds.
-     * </p>
-     * Use {@link AudioManager#AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK} to indicate it's OK for the
-     * previous focus owner to keep playing if it ducks its audio output.
-     * </p>
-     * Use {@link AudioManager#AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE} for a temporary request that
-     * benefits from the system not playing disruptive sounds such as notifications, for use cases
-     * such as voice memo recording, or speech recognition.
-     * </p>
-     * Use {@link AudioManager#AUDIOFOCUS_GAIN} for a focus request of unknown duration, such as
-     * the playback of a song or a video.
-     * @return {@link AudioManager#AUDIOFOCUS_REQUEST_FAILED}, or
-     * {@link AudioManager#AUDIOFOCUS_REQUEST_GRANTED}.
-     * @throws IllegalArgumentException
-     */
-    public abstract int requestAudioFocus(OnAudioFocusChangeListener listener,
-            AudioAttributes requestAttributes,
-            int durationHint) throws CarNotConnectedException, IllegalArgumentException;
-
-    /**
-     * @hide
-     */
-    public abstract int requestAudioFocus(OnAudioFocusChangeListener listener,
-            AudioAttributes requestAttributes,
-            int durationHint,
-            int flags) throws CarNotConnectedException, IllegalArgumentException;
-    /**
-     * Abandon audio focus. Causes the previous focus owner (if any) to receive focus.
-     * @param listener The listener with which focus was requested.
-     * @param aa
-     */
-    public abstract void abandonAudioFocus(OnAudioFocusChangeListener listener, AudioAttributes aa);
-
-    /**
      * Get {@link AudioFormat} for audio record.
      * @return {@link AudioFormat} for audio record.
      */
@@ -175,26 +134,4 @@ public abstract class CarAudioManager implements CarManagerBase {
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     public abstract CarAudioRecord createCarAudioRecord(int bufferSize)
             throws SecurityException, CarNotConnectedException;
-
-    /**
-     * Check if media audio is muted or not (includes music and radio). Any application
-     * taking audio focus for media stream will move it out of a mute state.
-     *
-     * @return Returns {@code true} if media is muted.
-     */
-    public abstract boolean isMediaMuted() throws CarNotConnectedException;
-
-    /**
-     * Mute or unmute media stream including radio. Can involve audio focus change to stop
-     * the the app currently holding audio focus. If requester is currently holding audio focus,
-     * it gets LOSS_TRANSIENT focus loss. Requires
-     * {@link android.support.car.Car#PERMISSION_CAR_CONTROL_AUDIO_VOLUME}
-     * permission.
-     *
-     * @param mute Returns {@code true} if media stream should be muted.
-     * @return Mute state of system after the request. A mute request can fail if a higher priority
-     * audio stream (such as a voice call) is already being played.
-     * @hide
-     */
-    public abstract boolean setMediaMute(boolean mute) throws CarNotConnectedException;
 }

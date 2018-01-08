@@ -17,6 +17,8 @@
 package android.car;
 
 import android.annotation.Nullable;
+import android.car.EvConnectorType;
+import android.car.FuelType;
 import android.car.annotation.FutureFeature;
 import android.car.annotation.ValueTypeDef;
 import android.os.Bundle;
@@ -25,9 +27,6 @@ import android.os.RemoteException;
 
 
 import com.android.internal.annotations.GuardedBy;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 
 /**
@@ -88,6 +87,32 @@ public final class CarInfoManager implements CarManagerBase {
 
     // add: transmission gear available selection, gear available steps
     //          drive wheel: FWD, RWD, AWD, 4WD */
+    /**
+     * Key for Fuel Capacity in milliliters.  Passed in basic info Bundle.
+     * @hide
+     */
+    @ValueTypeDef(type = Integer.class)
+    public static final String BASIC_INFO_FUEL_CAPACITY = "android.car.fuel-capacity";
+    /**
+     * Key for Fuel Types.  This is an array of fuel types the vehicle supports.
+     * Passed in basic info Bundle.
+     * @hide
+     */
+    @ValueTypeDef(type = Integer.class)
+    public static final String BASIC_INFO_FUEL_TYPES = "android.car.fuel-types";
+    /**
+     * Key for EV Battery Capacity in WH.  Passed in basic info Bundle.
+     * @hide
+     */
+    @ValueTypeDef(type = Integer.class)
+    public static final String BASIC_INFO_EV_BATTERY_CAPACITY = "android.car.ev-battery-capacity";
+    /**
+     * Key for EV Connector Types.  This is an array of connector types the vehicle supports.
+     * Passed in basic info Bundle.
+     * @hide
+     */
+    @ValueTypeDef(type = Integer.class)
+    public static final String BASIC_INFO_EV_CONNECTOR_TYPES = "android.car.ev-connector-types";
 
     private final ICarInfo mService;
 
@@ -95,38 +120,67 @@ public final class CarInfoManager implements CarManagerBase {
     private Bundle mBasicInfo;
 
     /**
-     * Return manufacturer of the car.
-     * @return null if information is not available.
+     * @return Manufacturer of the car.  Null if not available.
      */
     public @android.annotation.Nullable String getManufacturer() throws CarNotConnectedException {
         return getBasicInfo().getString(BASIC_INFO_KEY_MANUFACTURER);
     }
 
     /**
-     * Return model name of the car. This information may not necessarily allow distinguishing
-     * different car models as the same name may be used for different cars depending on
-     * manufacturers.
-     * @return null if information is not available.
+     * @return Model name of the car, null if not available.  This information
+     * may not necessarily allow distinguishing different car models as the same
+     * name may be used for different cars depending on manufacturers.
      */
     public @Nullable String getModel() throws CarNotConnectedException {
         return getBasicInfo().getString(BASIC_INFO_KEY_MODEL);
     }
 
     /**
-     * Return model year of the car in AC.
-     * @return null if information is not available.
+     * @return Model year of the car in AC.  Null if not available.
      */
     public @Nullable String getModelYear() throws CarNotConnectedException {
         return getBasicInfo().getString(BASIC_INFO_KEY_MODEL_YEAR);
     }
 
     /**
-     * Return unique identifier for the car. This is not VIN, and id is persistent until user
-     * resets it. This ID is guaranteed to be always available.
-     * @return vehicle id
+     * @return Unique identifier for the car. This is not VIN, and vehicle id is
+     * persistent until user resets it. This ID is guaranteed to be always
+     * available.
      */
     public String getVehicleId() throws CarNotConnectedException {
         return getBasicInfo().getString(BASIC_INFO_KEY_VEHICLE_ID);
+    }
+
+    /**
+     * @return Fuel capacity of the car in milliliters.  0 if car doesn't run on
+     *         fuel.
+     */
+    public float getFuelCapacity() throws CarNotConnectedException {
+        return getBasicInfo().getFloat(BASIC_INFO_FUEL_CAPACITY);
+    }
+
+    /**
+     * @return Array of FUEL_TYPEs available in the car.  Empty array if no fuel
+     *         types available.
+     */
+    public @FuelType.Enum int[] getFuelTypes() throws CarNotConnectedException {
+        return getIntArray(BASIC_INFO_FUEL_TYPES);
+    }
+
+    /**
+     * @return Battery capacity of the car in WH.  0 if car doesn't run on
+     *         battery.
+     */
+    public float getEvBatteryCapacity() throws CarNotConnectedException {
+        return getBasicInfo().getFloat(BASIC_INFO_EV_BATTERY_CAPACITY);
+    }
+
+    /**
+     * @return Array of EV_CONNECTOR_TYPEs available in the car.  Empty array if
+     *         no connector types available.
+     */
+    public @EvConnectorType.Enum int[] getEvConnectorTypes() throws CarNotConnectedException {
+        return getIntArray(BASIC_INFO_EV_CONNECTOR_TYPES);
     }
 
     /**
@@ -169,6 +223,22 @@ public final class CarInfoManager implements CarManagerBase {
             throw new CarNotConnectedException(e);
         }
         return mBasicInfo;
+    }
+
+    /**
+     * Get int array from property ID.
+     * @param id property ID to get
+     * @return array of property values or empty array if the property isn't
+     *         available.
+     * @throws CarNotConnectedException
+     */
+    private int[] getIntArray(String id) throws CarNotConnectedException {
+        int[] retVal = getBasicInfo().getIntArray(id);
+        if (retVal == null) {
+            // Create an empty array
+            retVal = new int[0];
+        }
+        return retVal;
     }
 
     /** @hide */
