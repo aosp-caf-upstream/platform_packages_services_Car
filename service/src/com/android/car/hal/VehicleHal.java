@@ -22,7 +22,6 @@ import static com.android.car.CarServiceUtils.toIntArray;
 import static java.lang.Integer.toHexString;
 
 import android.annotation.CheckResult;
-import android.car.annotation.FutureFeature;
 import android.hardware.automotive.vehicle.V2_0.IVehicle;
 import android.hardware.automotive.vehicle.V2_0.IVehicleCallback;
 import android.hardware.automotive.vehicle.V2_0.SubscribeFlags;
@@ -71,18 +70,14 @@ public class VehicleHal extends IVehicleCallback.Stub {
     private final HandlerThread mHandlerThread;
     private final SensorHalService mSensorHal;
     private final InfoHalService mInfoHal;
-    private final AudioHalService mAudioHal;
     private final CabinHalService mCabinHal;
     private final RadioHalService mRadioHal;
     private final PowerHalService mPowerHal;
     private final HvacHalService mHvacHal;
     private final InputHalService mInputHal;
     private final VendorExtensionHalService mVendorExtensionHal;
+    private final VmsHalService mVmsHal;
     private DiagnosticHalService mDiagnosticHal = null;
-
-    @FutureFeature
-    private VmsHalService mVmsHal;
-
 
     /** Might be re-assigned if Vehicle HAL is reconnected. */
     private volatile HalClient mHalClient;
@@ -102,7 +97,6 @@ public class VehicleHal extends IVehicleCallback.Stub {
         mPowerHal = new PowerHalService(this);
         mSensorHal = new SensorHalService(this);
         mInfoHal = new InfoHalService(this);
-        mAudioHal = new AudioHalService(this);
         mCabinHal = new CabinHalService(this);
         mRadioHal = new RadioHalService(this);
         mHvacHal = new HvacHalService(this);
@@ -113,7 +107,6 @@ public class VehicleHal extends IVehicleCallback.Stub {
         mAllServices.addAll(Arrays.asList(mPowerHal,
                 mSensorHal,
                 mInfoHal,
-                mAudioHal,
                 mCabinHal,
                 mRadioHal,
                 mHvacHal,
@@ -128,13 +121,12 @@ public class VehicleHal extends IVehicleCallback.Stub {
     /** Dummy version only for testing */
     @VisibleForTesting
     public VehicleHal(PowerHalService powerHal, SensorHalService sensorHal, InfoHalService infoHal,
-            AudioHalService audioHal, CabinHalService cabinHal, DiagnosticHalService diagnosticHal,
+            CabinHalService cabinHal, DiagnosticHalService diagnosticHal,
             RadioHalService radioHal, HvacHalService hvacHal, HalClient halClient) {
         mHandlerThread = null;
         mPowerHal = powerHal;
         mSensorHal = sensorHal;
         mInfoHal = infoHal;
-        mAudioHal = audioHal;
         mCabinHal = cabinHal;
         mDiagnosticHal = diagnosticHal;
         mRadioHal = radioHal;
@@ -223,10 +215,6 @@ public class VehicleHal extends IVehicleCallback.Stub {
         return mInfoHal;
     }
 
-    public AudioHalService getAudioHal() {
-        return mAudioHal;
-    }
-
     public CabinHalService getCabinHal() {
         return mCabinHal;
     }
@@ -253,7 +241,6 @@ public class VehicleHal extends IVehicleCallback.Stub {
         return mVendorExtensionHal;
     }
 
-    @FutureFeature
     public VmsHalService getVmsHal() { return mVmsHal; }
 
     private void assertServiceOwnerLocked(HalServiceBase service, int property) {
