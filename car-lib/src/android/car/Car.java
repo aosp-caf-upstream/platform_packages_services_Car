@@ -23,6 +23,8 @@ import android.car.annotation.FutureFeature;
 import android.car.cluster.CarInstrumentClusterManager;
 import android.car.content.pm.CarPackageManager;
 import android.car.diagnostic.CarDiagnosticManager;
+import android.car.drivingstate.CarDrivingStateManager;
+import android.car.drivingstate.CarUxRestrictionsManager;
 import android.car.hardware.CarSensorManager;
 import android.car.hardware.CarVendorExtensionManager;
 import android.car.hardware.cabin.CarCabinManager;
@@ -108,8 +110,10 @@ public final class Car {
 
     /**
      * @hide
+     * @deprecated see {@link CarRadioManager}
      */
     @SystemApi
+    @Deprecated
     public static final String RADIO_SERVICE = "radio";
 
     /**
@@ -140,6 +144,18 @@ public final class Car {
      * @hide
      */
     public static final String VMS_SUBSCRIBER_SERVICE = "vehicle_map_subscriber_service";
+
+    /**
+     * Service name for {@link CarDrivingStateManager}
+     * @hide
+     */
+    @SystemApi
+    public static final String CAR_DRIVING_STATE_SERVICE = "drivingstate";
+
+    /**
+     * Service name for {@link CarUxRestrictionsManager}
+     */
+    public static final String CAR_UX_RESTRICTION_SERVICE = "uxrestriction";
 
     /**
      * @hide
@@ -238,8 +254,10 @@ public final class Car {
     /**
      * Permission necessary to access Car RADIO system APIs.
      * @hide
+     * @deprecated see {@link CarRadioManager}
      */
     @SystemApi
+    @Deprecated
     public static final String PERMISSION_CAR_RADIO = "android.car.permission.CAR_RADIO";
 
 
@@ -266,6 +284,14 @@ public final class Car {
     @SystemApi
     public static final String PERMISSION_CAR_TEST_SERVICE =
             "android.car.permission.CAR_TEST_SERVICE";
+
+    /**
+     * Permission necessary to access CarDrivingStateService to get a Car's driving state.
+     * @hide
+     */
+    @SystemApi
+    public static final String PERMISSION_CAR_DRIVING_STATE =
+            "android.car.permission.CAR_DRIVING_STATE";
 
     /**
      * Permissions necessary to access VMS publisher APIs.
@@ -674,8 +700,18 @@ public final class Car {
                 break;
             case BLUETOOTH_SERVICE:
                 manager = new CarBluetoothManager(binder, mContext);
+                break;
             case STORAGE_MONITORING_SERVICE:
                 manager = new CarStorageMonitoringManager(binder, mEventHandler);
+                break;
+            case CAR_DRIVING_STATE_SERVICE:
+                manager = new CarDrivingStateManager(binder, mContext, mEventHandler);
+                break;
+            case CAR_UX_RESTRICTION_SERVICE:
+                manager = new CarUxRestrictionsManager(binder, mContext, mEventHandler);
+                break;
+            default:
+                break;
         }
         return manager;
     }
