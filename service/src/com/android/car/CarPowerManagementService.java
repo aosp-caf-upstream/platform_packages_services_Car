@@ -359,6 +359,7 @@ public class CarPowerManagementService implements CarServiceBase,
         }
     }
 
+    @GuardedBy("this")
     private void releaseTimerLocked() {
         if (mTimer != null) {
             mTimer.cancel();
@@ -416,7 +417,10 @@ public class CarPowerManagementService implements CarServiceBase,
         synchronized (this) {
             mLastSleepEntryTime = SystemClock.elapsedRealtime();
         }
-        mSystemInterface.enterDeepSleep(wakeupTimeSec);
+        if (mSystemInterface.enterDeepSleep(wakeupTimeSec) == false) {
+            // System did not suspend.  Need to shutdown
+            // TODO:  Shutdown gracefully
+        }
         mHal.sendSleepExit();
         for (PowerServiceEventListener listener : mListeners) {
             listener.onSleepExit();
