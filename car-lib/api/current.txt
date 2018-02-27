@@ -13,6 +13,7 @@ package android.car {
     field public static final java.lang.String AUDIO_SERVICE = "audio";
     field public static final java.lang.String CAR_EXTRA_MEDIA_PACKAGE = "android.car.intent.extra.MEDIA_PACKAGE";
     field public static final java.lang.String CAR_INTENT_ACTION_MEDIA_TEMPLATE = "android.car.intent.action.MEDIA_TEMPLATE";
+    field public static final java.lang.String CAR_UX_RESTRICTION_SERVICE = "uxrestriction";
     field public static final int CONNECTION_TYPE_EMBEDDED = 5; // 0x5
     field public static final java.lang.String INFO_SERVICE = "info";
     field public static final java.lang.String PACKAGE_SERVICE = "package";
@@ -182,6 +183,43 @@ package android.car.content.pm {
 
 }
 
+package android.car.drivingstate {
+
+  public class CarUxRestrictions implements android.os.Parcelable {
+    ctor public CarUxRestrictions(boolean, int, long);
+    method public int describeContents();
+    method public int getActiveRestrictions();
+    method public long getTimeStamp();
+    method public boolean isRequiresDistractionOptimization();
+    method public boolean isSameRestrictions(android.car.drivingstate.CarUxRestrictions);
+    method public void writeToParcel(android.os.Parcel, int);
+    field public static final android.os.Parcelable.Creator<android.car.drivingstate.CarUxRestrictions> CREATOR;
+    field public static final int UX_RESTRICTIONS_FULLY_RESTRICTED = 127; // 0x7f
+    field public static final int UX_RESTRICTIONS_LIMIT_CONTENT_ITEMS = 32; // 0x20
+    field public static final int UX_RESTRICTIONS_LIMIT_STRING_LENGTH = 4; // 0x4
+    field public static final int UX_RESTRICTIONS_NO_FIELD_ENTRY = 8; // 0x8
+    field public static final int UX_RESTRICTIONS_NO_SETUP_CONFIG = 64; // 0x40
+    field public static final int UX_RESTRICTIONS_NO_TEXT_FILTERING = 2; // 0x2
+    field public static final int UX_RESTRICTIONS_NO_TEXT_SEARCH = 1; // 0x1
+    field public static final int UX_RESTRICTIONS_NO_VIDEO = 16; // 0x10
+    field public static final int UX_RESTRICTIONS_UNRESTRICTED = 0; // 0x0
+  }
+
+  public static abstract class CarUxRestrictions.CarUxRestrictionsInfo implements java.lang.annotation.Annotation {
+  }
+
+  public final class CarUxRestrictionsManager {
+    method public android.car.drivingstate.CarUxRestrictions getCurrentCarUxRestrictions() throws android.car.CarNotConnectedException;
+    method public synchronized void registerListener(android.car.drivingstate.CarUxRestrictionsManager.onUxRestrictionsChangedListener) throws android.car.CarNotConnectedException, java.lang.IllegalArgumentException;
+    method public synchronized void unregisterListener() throws android.car.CarNotConnectedException;
+  }
+
+  public static abstract interface CarUxRestrictionsManager.onUxRestrictionsChangedListener {
+    method public abstract void onUxRestrictionsChanged(android.car.drivingstate.CarUxRestrictions);
+  }
+
+}
+
 package android.car.hardware {
 
   public class CarSensorEvent implements android.os.Parcelable {
@@ -278,22 +316,22 @@ package android.car.hardware {
 package android.car.media {
 
   public final class CarAudioManager {
-    method public android.media.AudioAttributes getAudioAttributesForCarUsage(int) throws android.car.CarNotConnectedException;
+    method public android.car.media.CarAudioPatchHandle createAudioPatch(java.lang.String, int, int) throws android.car.CarNotConnectedException;
+    method public java.lang.String[] getExternalSources() throws android.car.CarNotConnectedException;
     method public int getUsageMaxVolume(int) throws android.car.CarNotConnectedException;
     method public int getUsageMinVolume(int) throws android.car.CarNotConnectedException;
     method public int getUsageVolume(int) throws android.car.CarNotConnectedException;
+    method public void releaseAudioPatch(android.car.media.CarAudioPatchHandle) throws android.car.CarNotConnectedException;
+    method public void setBalanceTowardRight(float) throws android.car.CarNotConnectedException;
+    method public void setFadeTowardFront(float) throws android.car.CarNotConnectedException;
     method public void setUsageVolume(int, int, int) throws android.car.CarNotConnectedException;
-    field public static final int CAR_AUDIO_USAGE_ALARM = 6; // 0x6
-    field public static final int CAR_AUDIO_USAGE_DEFAULT = 0; // 0x0
-    field public static final int CAR_AUDIO_USAGE_MUSIC = 1; // 0x1
-    field public static final int CAR_AUDIO_USAGE_NAVIGATION_GUIDANCE = 3; // 0x3
-    field public static final int CAR_AUDIO_USAGE_NOTIFICATION = 7; // 0x7
-    field public static final int CAR_AUDIO_USAGE_RADIO = 2; // 0x2
-    field public static final int CAR_AUDIO_USAGE_RINGTONE = 10; // 0xa
-    field public static final int CAR_AUDIO_USAGE_SYSTEM_SAFETY_ALERT = 9; // 0x9
-    field public static final int CAR_AUDIO_USAGE_SYSTEM_SOUND = 8; // 0x8
-    field public static final int CAR_AUDIO_USAGE_VOICE_CALL = 4; // 0x4
-    field public static final int CAR_AUDIO_USAGE_VOICE_COMMAND = 5; // 0x5
+  }
+
+  public final class CarAudioPatchHandle implements android.os.Parcelable {
+    ctor public CarAudioPatchHandle(android.media.AudioPatch);
+    method public int describeContents();
+    method public void writeToParcel(android.os.Parcel, int);
+    field public static final android.os.Parcelable.Creator<android.car.media.CarAudioPatchHandle> CREATOR;
   }
 
 }

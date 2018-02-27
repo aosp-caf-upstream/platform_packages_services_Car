@@ -61,7 +61,7 @@ public class VmsHalServiceSubscriptionEventTest extends MockedCarTestBase {
         addProperty(VehicleProperty.VEHICLE_MAP_SERVICE, mHalHandler)
                 .setChangeMode(VehiclePropertyChangeMode.ON_CHANGE)
                 .setAccess(VehiclePropertyAccess.READ_WRITE)
-                .setSupportedAreas(VehicleAreaType.VEHICLE_AREA_TYPE_NONE);
+                .addAreaConfig(VehicleAreaType.VEHICLE_AREA_TYPE_NONE, 0, 0);
     }
 
     @Override
@@ -112,8 +112,6 @@ public class VmsHalServiceSubscriptionEventTest extends MockedCarTestBase {
         int sequenceNumber = v.get(VmsSubscriptionsStateIntegerValuesIndex.SEQUENCE_NUMBER);
         int numberLayers = v.get(VmsSubscriptionsStateIntegerValuesIndex.NUMBER_OF_LAYERS);
         assertEquals(VmsMessageType.SUBSCRIPTIONS_RESPONSE, messageType);
-        //TODO(asafro): This assertion makes no sense. need to fix.
-        //assertEquals(layers.size(), sequenceNumber);
         assertEquals(layers.size(), numberLayers);
         List<VmsLayer> receivedLayers = new ArrayList<>();
         int start = VmsSubscriptionsStateIntegerValuesIndex.SUBSCRIPTIONS_START;
