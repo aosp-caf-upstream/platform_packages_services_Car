@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package android.car.media;
+package android.car.hardware.power;
 
+import android.car.hardware.power.ICarPowerStateListener;
 
-/**
- * Encapsulates a volume group in car.
- *
- * @hide
- */
-parcelable CarVolumeGroup;
+/** @hide */
+interface ICarPower {
+    void registerListener(in ICarPowerStateListener callback) = 0;
+
+    void unregisterListener(in ICarPowerStateListener callback) = 1;
+
+    void requestShutdownOnNextSuspend() = 2;
+
+    int getBootReason() = 3;
+
+    void finished(in int state) = 4;
+}

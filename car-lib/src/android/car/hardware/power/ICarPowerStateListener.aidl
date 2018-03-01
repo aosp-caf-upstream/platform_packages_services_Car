@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.car.cluster.renderer;
 
-import android.car.navigation.CarNavigationInstrumentCluster;
-import android.graphics.Bitmap;
-import android.os.Bundle;
+package android.car.hardware.power;
 
 /**
- * Binder API for Instrument Cluster Navigation.
- *
+ * Binder callback for CarPowerStateListener.
  * @hide
  */
-interface IInstrumentClusterNavigation {
-    void onEvent(int eventType, in Bundle bundle);
-    CarNavigationInstrumentCluster getInstrumentClusterInfo();
+oneway interface ICarPowerStateListener {
+    /**
+     * Called when a power state change occurs
+     */
+    void onStateChanged(in int state) = 0;
 }
+
