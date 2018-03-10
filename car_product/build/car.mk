@@ -80,6 +80,7 @@ PRODUCT_PACKAGES += \
     CarDialerApp \
     CarRadioApp \
     OverviewApp \
+    CarLauncher \
     CarLensPickerApp \
     LocalMediaPlayer \
     CarMediaApp \
@@ -90,7 +91,12 @@ PRODUCT_PACKAGES += \
     CarSettings \
     CarUsbHandler \
     android.car \
+    car-frameworks-service \
     com.android.car.procfsinspector \
+    libcar-framework-service-jni \
+
+# System Server components
+PRODUCT_SYSTEM_SERVER_JARS += car-frameworks-service
 
 # Boot animation
 PRODUCT_COPY_FILES += \
