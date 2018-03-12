@@ -15,6 +15,12 @@
  */
 package com.android.car.trust;
 
+import static com.android.car.trust.CarBleTrustAgent.ACTION_ADD_TOKEN_RESULT;
+import static com.android.car.trust.CarBleTrustAgent.ACTION_TOKEN_STATUS_RESULT;
+import static com.android.car.trust.CarBleTrustAgent.INTENT_EXTRA_TOKEN_HANDLE;
+import static com.android.car.trust.CarBleTrustAgent.INTENT_EXTRA_TOKEN_STATUS;
+
+import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -24,54 +30,30 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
-import com.android.car.trust.CarEnrolmentService.EnrolmentCallback;
-import com.android.car.trust.comms.SimpleBleServer.ConnectionListener;
 
-import static com.android.car.trust.CarBleTrustAgent.ACTION_ADD_TOKEN_RESULT;
-import static com.android.car.trust.CarBleTrustAgent.ACTION_TOKEN_STATUS_RESULT;
-import static com.android.car.trust.CarBleTrustAgent.INTENT_EXTRA_TOKEN_HANDLE;
-import static com.android.car.trust.CarBleTrustAgent.INTENT_EXTRA_TOKEN_STATUS;
+import com.android.car.trust.CarEnrolmentService.EnrolmentListener;
+import com.android.car.trust.SimpleBleServer.ConnectionCallback;
 
 /**
  * Setup activity that binds {@link CarEnrolmentService} and starts the enrolment process.
  */
 public class CarEnrolmentActivity extends Activity {
-    private static String TAG = "CarEnrolment";
-    private static String SP_HANDLE_KEY = "sp-test";
-
-    private TextView mOutputText;
-    private TextView mStartButton;
-
-    private long mHandle;
-
-    private CarEnrolmentService mEnrolmentService;
-
-    private BluetoothDevice mDevice;
-
-    private boolean mServiceBound;
-
-    private LocalBroadcastManager mLocalBroadcastManager;
-
-    private SharedPreferences mPrefs;
+    private static final String SP_HANDLE_KEY = "sp-test";
+    private static final int FINE_LOCATION_REQUEST_CODE = 42;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            intent.getPackage();
-
             String action = intent.getAction();
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Received broadcast: " + action);
-            }
+            Log.d(Utils.LOG_TAG, "Received broadcast: " + action);
 
             if (ACTION_TOKEN_STATUS_RESULT.equals(action)) {
                 boolean tokenActive = intent.getBooleanExtra(INTENT_EXTRA_TOKEN_STATUS, false);
@@ -79,14 +61,9 @@ public class CarEnrolmentActivity extends Activity {
             } else if (ACTION_ADD_TOKEN_RESULT.equals(action)) {
                 final long handle = intent.getLongExtra(INTENT_EXTRA_TOKEN_HANDLE, -1);
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mPrefs.edit().putLong(SP_HANDLE_KEY, handle).apply();
-                        if (Log.isLoggable(TAG, Log.DEBUG)) {
-                            Log.d(TAG, "stored new handle");
-                        }
-                    }
+                runOnUiThread(() -> {
+                    mPrefs.edit().putLong(SP_HANDLE_KEY, handle).apply();
+                    Log.d(Utils.LOG_TAG, "stored new handle");
                 });
 
                 mEnrolmentService.sendHandle(handle, mDevice);
@@ -96,101 +73,7 @@ public class CarEnrolmentActivity extends Activity {
         }
     };
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.car_client);
-        mOutputText = (TextView) findViewById(R.id.textfield);
-
-        final Intent intent = new Intent(this, CarEnrolmentService.class);
-
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(this /* context */);
-
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ACTION_TOKEN_STATUS_RESULT);
-        filter.addAction(ACTION_ADD_TOKEN_RESULT);
-
-        mLocalBroadcastManager = LocalBroadcastManager.getInstance(this /* context */);
-        mLocalBroadcastManager.registerReceiver(mReceiver, filter);
-
-        mStartButton = (Button) findViewById(R.id.start_button);
-        mStartButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // binding the service will start it if not started.
-                bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-            }
-        });
-
-        Button revokeButton = (Button) findViewById(R.id.revoke_trust_button);
-        revokeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(CarBleTrustAgent.ACTION_REVOKE_TRUST);
-                intent.setPackage(getPackageName());
-                sendBroadcast(intent);
-            }
-        });
-    }
-
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className,
-                IBinder service) {
-            mServiceBound = true;
-            CarEnrolmentService.EnrolmentServiceBinder binder
-                    = (CarEnrolmentService.EnrolmentServiceBinder) service;
-            mEnrolmentService = binder.getService();
-            mEnrolmentService.addEnrolmentCallback(mEnrolmentCallback);
-            mEnrolmentService.addConnectionListener(mConnectionListener);
-            mEnrolmentService.start();
-        }
-
-        public void onServiceDisconnected(ComponentName arg0) {
-            mEnrolmentService = null;
-            mServiceBound = false;
-        }
-    };
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        if (!mPrefs.contains(SP_HANDLE_KEY)) {
-            appendOutputText("No handles found.");
-            return;
-        }
-
-        try {
-            mHandle = mPrefs.getLong(SP_HANDLE_KEY, -1);
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "onResume, checking handle active: " + mHandle);
-            }
-            isTokenActive(mHandle);
-        } catch (RemoteException e) {
-            Log.e(TAG, "Error checking if token is valid");
-            appendOutputText("Error checking if token is valid");
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        if (mServiceBound) {
-            unbindService(mServiceConnection);
-        }
-        super.onDestroy();
-    }
-
-    private void appendOutputText(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mOutputText.append("\n" + text);
-            }
-        });
-    }
-
-    private ConnectionListener mConnectionListener = new ConnectionListener() {
+    private final ConnectionCallback mConnectionCallback = new ConnectionCallback() {
         @Override
         public void onServerStarted() {
             appendOutputText("Server started");
@@ -209,13 +92,105 @@ public class CarEnrolmentActivity extends Activity {
         }
     };
 
-    private EnrolmentCallback mEnrolmentCallback = new EnrolmentCallback() {
+    private final EnrolmentListener mEnrolmentListener = (byte[] token) -> {
+        appendOutputText("Enrolment data received ");
+        addEscrowToken(token);
+    };
+
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
-        public void onEnrolmentDataReceived(byte[] token) {
-            appendOutputText("Enrolment data received ");
-            addEscrowToken(token);
+        public void onServiceConnected(ComponentName className,
+                IBinder service) {
+            mServiceBound = true;
+            CarEnrolmentService.EnrolmentServiceBinder binder
+                    = (CarEnrolmentService.EnrolmentServiceBinder) service;
+            mEnrolmentService = binder.getService();
+            mEnrolmentService.registerEnrolmentListener(mEnrolmentListener);
+            mEnrolmentService.registerConnectionCallback(mConnectionCallback);
+            mEnrolmentService.start();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mEnrolmentService.unregisterEnrolmentListener(mEnrolmentListener);
+            mEnrolmentService.unregisterConnectionCallback(mConnectionCallback);
+            mEnrolmentService = null;
+            mServiceBound = false;
         }
     };
+
+    private TextView mOutputText;
+    private long mHandle;
+    private CarEnrolmentService mEnrolmentService;
+    private BluetoothDevice mDevice;
+    private boolean mServiceBound;
+    private LocalBroadcastManager mLocalBroadcastManager;
+    private SharedPreferences mPrefs;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.car_enrolment_activity);
+        mOutputText = findViewById(R.id.textfield);
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this /* context */);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_TOKEN_STATUS_RESULT);
+        filter.addAction(ACTION_ADD_TOKEN_RESULT);
+
+        mLocalBroadcastManager = LocalBroadcastManager.getInstance(this /* context */);
+        mLocalBroadcastManager.registerReceiver(mReceiver, filter);
+
+        findViewById(R.id.start_button).setOnClickListener((view) -> {
+            Intent bindIntent = new Intent(this, CarEnrolmentService.class);
+            bindService(bindIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+        });
+
+        findViewById(R.id.revoke_trust_button).setOnClickListener((view) -> {
+            Intent revokeIntent = new Intent(CarBleTrustAgent.ACTION_REVOKE_TRUST);
+            revokeIntent.setPackage(getPackageName());
+            sendBroadcast(revokeIntent);
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    new String[] { android.Manifest.permission.ACCESS_FINE_LOCATION },
+                    FINE_LOCATION_REQUEST_CODE);
+        }
+
+        if (!mPrefs.contains(SP_HANDLE_KEY)) {
+            appendOutputText("No handles found.");
+            return;
+        }
+
+        try {
+            mHandle = mPrefs.getLong(SP_HANDLE_KEY, -1);
+            Log.d(Utils.LOG_TAG, "onResume, checking handle active: " + mHandle);
+            isTokenActive(mHandle);
+        } catch (RemoteException e) {
+            Log.e(Utils.LOG_TAG, "Error checking if token is valid");
+            appendOutputText("Error checking if token is valid");
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mServiceBound) {
+            unbindService(mServiceConnection);
+        }
+        super.onDestroy();
+    }
+
+    private void appendOutputText(final String text) {
+        runOnUiThread(() -> mOutputText.append("\n" + text));
+    }
 
     private void isTokenActive(long handle) throws RemoteException {
         Intent intent = new Intent();
