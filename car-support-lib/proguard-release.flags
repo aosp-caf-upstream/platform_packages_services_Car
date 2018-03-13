@@ -703,10 +703,20 @@
 
     public void addContentView(android.view.View, android.view.ViewGroup$LayoutParams);
     protected void attachBaseContext(android.content.Context);
-    public void autofillCallbackAuthenticate(int, android.content.IntentSender, android.content.Intent);
-    public boolean autofillCallbackRequestHideFillUi();
-    public boolean autofillCallbackRequestShowFillUi(android.view.View, int, int, android.graphics.Rect, android.view.autofill.IAutofillWindowPresenter);
-    public void autofillCallbackResetableStateAvailable();
+    public void autofillClientAuthenticate(int, android.content.IntentSender, android.content.Intent);
+    public android.view.View autofillClientFindViewByAccessibilityIdTraversal(int, int);
+    public android.view.View autofillClientFindViewByAutofillIdTraversal(android.view.autofill.AutofillId);
+    public android.view.View[] autofillClientFindViewsByAutofillIdTraversal(android.view.autofill.AutofillId[]);
+    public android.os.IBinder autofillClientGetActivityToken();
+    public android.content.ComponentName autofillClientGetComponentName();
+    public boolean[] autofillClientGetViewVisibility(android.view.autofill.AutofillId[]);
+    public boolean autofillClientIsFillUiShowing();
+    public boolean autofillClientIsVisibleForAutofill();
+    public boolean autofillClientRequestHideFillUi();
+    public boolean autofillClientRequestShowFillUi(android.view.View, int, int, android.graphics.Rect, android.view.autofill.IAutofillWindowPresenter);
+    public void autofillClientResetableStateAvailable();
+    public void autofillClientRunOnUiThread(java.lang.Runnable);
+    public boolean autofillIsCompatibilityModeEnabled();
     public boolean canStartActivityForResult();
     public void closeContextMenu();
     public void closeOptionsMenu();
@@ -728,9 +738,7 @@
     public boolean enterPictureInPictureMode(android.app.PictureInPictureParams);
     public void enterPictureInPictureModeIfPossible();
     public void exitFreeformMode();
-    public android.view.View findViewByAutofillIdTraversal(int);
     public android.view.View findViewById(int);
-    public android.view.View[] findViewsByAutofillIdTraversal(int[]);
     public void finish();
     public void finishActivity(int);
     public void finishActivityFromChild(android.app.Activity, int);
@@ -769,7 +777,6 @@
     public int getTaskId();
     public java.lang.CharSequence getTitle();
     public int getTitleColor();
-    public boolean[] getViewVisibility(int[]);
     public android.app.VoiceInteractor getVoiceInteractor();
     public int getVolumeControlStream();
     public android.view.Window getWindow();
@@ -790,7 +797,6 @@
     public boolean isOverlayWithDecorCaptionEnabled();
     public boolean isResumed();
     public boolean isTaskRoot();
-    public boolean isVisibleForAutofill();
     public boolean isVoiceInteraction();
     public boolean isVoiceInteractionRoot();
     public android.database.Cursor managedQuery(android.net.Uri, java.lang.String[], java.lang.String, java.lang.String);
@@ -957,7 +963,7 @@
     public void startActivities(android.content.Intent[], android.os.Bundle);
     public void startActivity(android.content.Intent);
     public void startActivity(android.content.Intent, android.os.Bundle);
-    public void startActivityAsCaller(android.content.Intent, android.os.Bundle, android.os.IBinder, boolean, int);
+    public void startActivityAsCaller(android.content.Intent, android.os.Bundle, boolean, int);
     public void startActivityAsUser(android.content.Intent, android.os.UserHandle);
     public void startActivityAsUser(android.content.Intent, android.os.Bundle, android.os.UserHandle);
     public void startActivityAsUserFromFragment(android.app.Fragment, android.content.Intent, int, android.os.Bundle, android.os.UserHandle);
@@ -1110,6 +1116,7 @@
     public static boolean supportsMultiWindow(android.content.Context);
     public static boolean supportsSplitScreenMultiWindow(android.content.Context);
     public boolean switchUser(int);
+    public boolean updatePersistableUriPermission(android.net.Uri, boolean, java.lang.String, boolean);
 
 
     public static java.lang.String ACTION_REPORT_HEAP_LIMIT;
@@ -1135,9 +1142,6 @@
     public static int COMPAT_MODE_NEVER;
     public static int COMPAT_MODE_TOGGLE;
     public static int COMPAT_MODE_UNKNOWN;
-    public static java.lang.String EXTRA_IGNORE_TARGET_SECURITY;
-    public static java.lang.String EXTRA_OPTIONS;
-    public static java.lang.String EXTRA_PERMISSION_TOKEN;
     public static int FLAG_AND_LOCKED;
     public static int FLAG_AND_UNLOCKED;
     public static int FLAG_AND_UNLOCKING_OR_UNLOCKED;
@@ -1565,6 +1569,7 @@
     public void setLaunchTaskId(int);
     public void setLaunchWindowingMode(int);
     public android.app.ActivityOptions setLockTaskMode(boolean);
+    public void setRemoteAnimationAdapter(android.view.RemoteAnimationAdapter);
     public void setRotationAnimationHint(int);
     public void setSplitScreenCreateMode(int);
     public void setTaskOverlay(boolean, boolean);
@@ -1652,13 +1657,14 @@
     public android.app.ContextImpl getSystemUiContext();
     public void handleActivityConfigurationChanged(android.os.IBinder, android.content.res.Configuration, int);
     public void handleConfigurationChanged(android.content.res.Configuration);
-    public void handleDestroyActivity(android.os.IBinder, boolean, int, boolean);
+    public void handleDestroyActivity(android.os.IBinder, boolean, int, boolean, java.lang.String);
     public void handleInstallProvider(android.content.pm.ProviderInfo);
     public android.app.Activity handleLaunchActivity(android.app.ActivityThread$ActivityClientRecord, android.app.servertransaction.PendingTransactionActions);
     public void handleMultiWindowModeChanged(android.os.IBinder, boolean, android.content.res.Configuration);
     public void handleNewIntent(android.os.IBinder, java.util.List, boolean);
     public void handlePauseActivity(android.os.IBinder, boolean, boolean, int, boolean, android.app.servertransaction.PendingTransactionActions);
     public void handlePictureInPictureModeChanged(android.os.IBinder, boolean, android.content.res.Configuration);
+    public void handleRelaunchActivity(android.app.ActivityThread$ActivityClientRecord, android.app.servertransaction.PendingTransactionActions);
     public void handleRequestAssistContextExtras(android.app.ActivityThread$RequestAssistContextExtras);
     public void handleResumeActivity(android.os.IBinder, boolean, boolean, java.lang.String);
     public void handleSendResult(android.os.IBinder, java.util.List);
@@ -1674,10 +1680,11 @@
     public void onNewActivityOptions(android.os.IBinder, android.app.ActivityOptions);
     public android.app.LoadedApk peekPackageInfo(java.lang.String, boolean);
     public void performRestartActivity(android.os.IBinder, boolean);
+    public android.app.ActivityThread$ActivityClientRecord prepareRelaunchActivity(android.os.IBinder, java.util.List, java.util.List, int, android.util.MergedConfiguration, boolean);
     public void registerOnActivityPausedListener(android.app.Activity, android.app.OnActivityPausedListener);
     public boolean releaseProvider(android.content.IContentProvider, boolean);
+    public void reportRelaunch(android.os.IBinder, android.app.servertransaction.PendingTransactionActions);
     public void reportStop(android.app.servertransaction.PendingTransactionActions);
-    public void requestRelaunchActivity(android.os.IBinder, java.util.List, java.util.List, int, boolean, android.content.res.Configuration, android.content.res.Configuration, boolean, boolean);
     public android.content.pm.ActivityInfo resolveActivityInfo(android.content.Intent);
     public void sendActivityResult(android.os.IBinder, java.lang.String, int, int, android.content.Intent);
     public android.app.Activity startActivityNow(android.app.Activity, java.lang.String, android.content.Intent, android.content.pm.ActivityInfo, android.os.IBinder, android.os.Bundle, android.app.Activity$NonConfigurationInstances);
@@ -1691,6 +1698,7 @@
     public static boolean DEBUG_BROADCAST;
     public static boolean DEBUG_CONFIGURATION;
     public static boolean DEBUG_MEMORY_TRIM;
+    public static boolean DEBUG_ORDER;
     public static long INVALID_PROC_STATE_SEQ;
     public static java.lang.String PROC_START_SEQ_IDENT;
     public static int SERVICE_DONE_EXECUTING_ANON;
@@ -1706,7 +1714,6 @@
     public int getLifecycleState();
     public java.lang.String getStateString();
     public boolean isPersistable();
-    public boolean isPreHoneycomb();
     public void setState(int);
     public java.lang.String toString();
 
@@ -1719,7 +1726,7 @@
 -keep class android.app.ActivityThread$ApplicationThread {
 
     public void attachAgent(java.lang.String);
-    public void bindApplication(java.lang.String, android.content.pm.ApplicationInfo, java.util.List, android.content.ComponentName, android.app.ProfilerInfo, android.os.Bundle, android.app.IInstrumentationWatcher, android.app.IUiAutomationConnection, int, boolean, boolean, boolean, boolean, android.content.res.Configuration, android.content.res.CompatibilityInfo, java.util.Map, android.os.Bundle, java.lang.String);
+    public void bindApplication(java.lang.String, android.content.pm.ApplicationInfo, java.util.List, android.content.ComponentName, android.app.ProfilerInfo, android.os.Bundle, android.app.IInstrumentationWatcher, android.app.IUiAutomationConnection, int, boolean, boolean, boolean, boolean, android.content.res.Configuration, android.content.res.CompatibilityInfo, java.util.Map, android.os.Bundle, java.lang.String, boolean);
     public void clearDnsCache();
     public void dispatchPackageBroadcast(int, java.lang.String[]);
     public void dumpActivity(android.os.ParcelFileDescriptor, android.os.IBinder, java.lang.String, java.lang.String[]);
@@ -1750,7 +1757,6 @@
     public void scheduleOnNewActivityOptions(android.os.IBinder, android.os.Bundle);
     public void scheduleReceiver(android.content.Intent, android.content.pm.ActivityInfo, android.content.res.CompatibilityInfo, int, java.lang.String, android.os.Bundle, boolean, int, int);
     public void scheduleRegisteredReceiver(android.content.IIntentReceiver, android.content.Intent, int, java.lang.String, android.os.Bundle, boolean, boolean, int, int);
-    public void scheduleRelaunchActivity(android.os.IBinder, java.util.List, java.util.List, int, boolean, android.content.res.Configuration, android.content.res.Configuration, boolean);
     public void scheduleServiceArgs(android.os.IBinder, android.content.pm.ParceledListSlice);
     public void scheduleSleeping(android.os.IBinder, boolean);
     public void scheduleStopService(android.os.IBinder);
@@ -1843,8 +1849,10 @@
     public int startOp(int);
     public int startOpNoThrow(java.lang.String, int, java.lang.String);
     public int startOpNoThrow(int, int, java.lang.String);
+    public void startWatchingActive(int[], android.app.AppOpsManager$OnOpActiveChangedListener);
     public void startWatchingMode(java.lang.String, java.lang.String, android.app.AppOpsManager$OnOpChangedListener);
     public void startWatchingMode(int, java.lang.String, android.app.AppOpsManager$OnOpChangedListener);
+    public void stopWatchingActive(android.app.AppOpsManager$OnOpActiveChangedListener);
     public void stopWatchingMode(android.app.AppOpsManager$OnOpChangedListener);
     public static int strDebugOpToOp(java.lang.String);
     public static int strOpToOp(java.lang.String);
@@ -2008,6 +2016,13 @@
     public static int _NUM_OP;
 }
 
+-keep class android.app.AppOpsManager$OnOpActiveChangedListener {
+
+    public abstract void onOpActiveChanged(int, int, java.lang.String, boolean);
+
+
+}
+
 -keep class android.app.AppOpsManager$OnOpChangedListener {
 
     public abstract void onOpChanged(java.lang.String, java.lang.String);
@@ -2049,6 +2064,7 @@
 -keep class android.app.Application {
     <init>();
 
+    public android.view.autofill.AutofillManager$AutofillClient getAutofillClient();
     public void onConfigurationChanged(android.content.res.Configuration);
     public void onCreate();
     public void onLowMemory();
@@ -2190,18 +2206,21 @@
     public abstract android.app.LoadedApk getPackageInfoNoCheck(android.content.pm.ApplicationInfo, android.content.res.CompatibilityInfo);
     public abstract void handleActivityConfigurationChanged(android.os.IBinder, android.content.res.Configuration, int);
     public abstract void handleConfigurationChanged(android.content.res.Configuration);
-    public abstract void handleDestroyActivity(android.os.IBinder, boolean, int, boolean);
+    public abstract void handleDestroyActivity(android.os.IBinder, boolean, int, boolean, java.lang.String);
     public abstract android.app.Activity handleLaunchActivity(android.app.ActivityThread$ActivityClientRecord, android.app.servertransaction.PendingTransactionActions);
     public abstract void handleMultiWindowModeChanged(android.os.IBinder, boolean, android.content.res.Configuration);
     public abstract void handleNewIntent(android.os.IBinder, java.util.List, boolean);
     public abstract void handlePauseActivity(android.os.IBinder, boolean, boolean, int, boolean, android.app.servertransaction.PendingTransactionActions);
     public abstract void handlePictureInPictureModeChanged(android.os.IBinder, boolean, android.content.res.Configuration);
+    public abstract void handleRelaunchActivity(android.app.ActivityThread$ActivityClientRecord, android.app.servertransaction.PendingTransactionActions);
     public abstract void handleResumeActivity(android.os.IBinder, boolean, boolean, java.lang.String);
     public abstract void handleSendResult(android.os.IBinder, java.util.List);
     public abstract void handleStartActivity(android.app.ActivityThread$ActivityClientRecord, android.app.servertransaction.PendingTransactionActions);
     public abstract void handleStopActivity(android.os.IBinder, boolean, int, android.app.servertransaction.PendingTransactionActions);
     public abstract void handleWindowVisibility(android.os.IBinder, boolean);
     public abstract void performRestartActivity(android.os.IBinder, boolean);
+    public abstract android.app.ActivityThread$ActivityClientRecord prepareRelaunchActivity(android.os.IBinder, java.util.List, java.util.List, int, android.util.MergedConfiguration, boolean);
+    public abstract void reportRelaunch(android.os.IBinder, android.app.servertransaction.PendingTransactionActions);
     public abstract void reportStop(android.app.servertransaction.PendingTransactionActions);
     public abstract void updatePendingConfiguration(android.content.res.Configuration);
     public abstract void updateProcessState(int, boolean);
@@ -2304,11 +2323,13 @@
     public java.lang.String getSystemServiceName(java.lang.Class);
     public android.content.res.Resources$Theme getTheme();
     public int getThemeResId();
+    public android.os.UserHandle getUser();
     public int getUserId();
     public android.graphics.drawable.Drawable getWallpaper();
     public int getWallpaperDesiredMinimumHeight();
     public int getWallpaperDesiredMinimumWidth();
     public void grantUriPermission(java.lang.String, android.net.Uri, int);
+    public boolean isAutofillCompatibilityEnabled();
     public boolean isCredentialProtectedStorage();
     public boolean isDeviceProtectedStorage();
     public boolean isRestricted();
@@ -2351,6 +2372,7 @@
     public void sendStickyOrderedBroadcast(android.content.Intent, android.content.BroadcastReceiver, android.os.Handler, int, java.lang.String, android.os.Bundle);
     public void sendStickyOrderedBroadcastAsUser(android.content.Intent, android.os.UserHandle, android.content.BroadcastReceiver, android.os.Handler, int, java.lang.String, android.os.Bundle);
     public void setAutofillClient(android.view.autofill.AutofillManager$AutofillClient);
+    public void setAutofillCompatibilityEnabled(boolean);
     public void setTheme(int);
     public void setWallpaper(android.graphics.Bitmap);
     public void setWallpaper(java.io.InputStream);
@@ -2953,6 +2975,7 @@
     public abstract void registerIntentSenderCancelListener(android.content.IIntentSender, com.android.internal.os.IResultReceiver);
     public abstract void registerProcessObserver(android.app.IProcessObserver);
     public abstract android.content.Intent registerReceiver(android.app.IApplicationThread, java.lang.String, android.content.IIntentReceiver, android.content.IntentFilter, java.lang.String, int, int);
+    public abstract void registerRemoteAnimationForNextActivityStart(java.lang.String, android.view.RemoteAnimationAdapter);
     public abstract void registerRemoteAnimations(android.os.IBinder, android.view.RemoteAnimationDefinition);
     public abstract void registerTaskStackListener(android.app.ITaskStackListener);
     public abstract void registerUidObserver(android.app.IUidObserver, int, int, java.lang.String);
@@ -2973,7 +2996,6 @@
     public abstract boolean requestAssistContextExtras(int, android.app.IAssistDataReceiver, android.os.Bundle, android.os.IBinder, boolean, boolean);
     public abstract boolean requestAutofillData(android.app.IAssistDataReceiver, android.os.Bundle, android.os.IBinder, int);
     public abstract void requestBugReport(int);
-    public abstract android.os.IBinder requestStartActivityPermissionToken(android.os.IBinder);
     public abstract void requestTelephonyBugReport(java.lang.String, java.lang.String);
     public abstract void requestWifiBugReport(java.lang.String, java.lang.String);
     public abstract void resizeDockedStack(android.graphics.Rect, android.graphics.Rect, android.graphics.Rect, android.graphics.Rect, android.graphics.Rect);
@@ -3031,7 +3053,7 @@
     public abstract int startActivities(android.app.IApplicationThread, java.lang.String, android.content.Intent[], java.lang.String[], android.os.IBinder, android.os.Bundle, int);
     public abstract int startActivity(android.app.IApplicationThread, java.lang.String, android.content.Intent, java.lang.String, android.os.IBinder, java.lang.String, int, int, android.app.ProfilerInfo, android.os.Bundle);
     public abstract android.app.WaitResult startActivityAndWait(android.app.IApplicationThread, java.lang.String, android.content.Intent, java.lang.String, android.os.IBinder, java.lang.String, int, int, android.app.ProfilerInfo, android.os.Bundle, int);
-    public abstract int startActivityAsCaller(android.app.IApplicationThread, java.lang.String, android.content.Intent, java.lang.String, android.os.IBinder, java.lang.String, int, int, android.app.ProfilerInfo, android.os.Bundle, android.os.IBinder, boolean, int);
+    public abstract int startActivityAsCaller(android.app.IApplicationThread, java.lang.String, android.content.Intent, java.lang.String, android.os.IBinder, java.lang.String, int, int, android.app.ProfilerInfo, android.os.Bundle, boolean, int);
     public abstract int startActivityAsUser(android.app.IApplicationThread, java.lang.String, android.content.Intent, java.lang.String, android.os.IBinder, java.lang.String, int, int, android.app.ProfilerInfo, android.os.Bundle, int);
     public abstract int startActivityFromRecents(int, android.os.Bundle);
     public abstract int startActivityIntentSender(android.app.IApplicationThread, android.content.IIntentSender, android.os.IBinder, android.content.Intent, java.lang.String, android.os.IBinder, java.lang.String, int, int, int, android.os.Bundle);
@@ -3080,6 +3102,7 @@
     public abstract boolean updateDisplayOverrideConfiguration(android.content.res.Configuration, int);
     public abstract void updateLockTaskFeatures(int, int);
     public abstract void updateLockTaskPackages(int, java.lang.String[]);
+    public abstract boolean updatePersistableUriPermission(android.net.Uri, boolean, java.lang.String, boolean, int);
     public abstract void updatePersistentConfiguration(android.content.res.Configuration);
     public abstract void waitForNetworkStateUpdate(long);
     public abstract boolean willActivityBeVisible(android.os.IBinder);
@@ -3101,7 +3124,7 @@
 -keep class android.app.IApplicationThread {
 
     public abstract void attachAgent(java.lang.String);
-    public abstract void bindApplication(java.lang.String, android.content.pm.ApplicationInfo, java.util.List, android.content.ComponentName, android.app.ProfilerInfo, android.os.Bundle, android.app.IInstrumentationWatcher, android.app.IUiAutomationConnection, int, boolean, boolean, boolean, boolean, android.content.res.Configuration, android.content.res.CompatibilityInfo, java.util.Map, android.os.Bundle, java.lang.String);
+    public abstract void bindApplication(java.lang.String, android.content.pm.ApplicationInfo, java.util.List, android.content.ComponentName, android.app.ProfilerInfo, android.os.Bundle, android.app.IInstrumentationWatcher, android.app.IUiAutomationConnection, int, boolean, boolean, boolean, boolean, android.content.res.Configuration, android.content.res.CompatibilityInfo, java.util.Map, android.os.Bundle, java.lang.String, boolean);
     public abstract void clearDnsCache();
     public abstract void dispatchPackageBroadcast(int, java.lang.String[]);
     public abstract void dumpActivity(android.os.ParcelFileDescriptor, android.os.IBinder, java.lang.String, java.lang.String[]);
@@ -3132,7 +3155,6 @@
     public abstract void scheduleOnNewActivityOptions(android.os.IBinder, android.os.Bundle);
     public abstract void scheduleReceiver(android.content.Intent, android.content.pm.ActivityInfo, android.content.res.CompatibilityInfo, int, java.lang.String, android.os.Bundle, boolean, int, int);
     public abstract void scheduleRegisteredReceiver(android.content.IIntentReceiver, android.content.Intent, int, java.lang.String, android.os.Bundle, boolean, boolean, int, int);
-    public abstract void scheduleRelaunchActivity(android.os.IBinder, java.util.List, java.util.List, int, boolean, android.content.res.Configuration, android.content.res.Configuration, boolean);
     public abstract void scheduleServiceArgs(android.os.IBinder, android.content.pm.ParceledListSlice);
     public abstract void scheduleSleeping(android.os.IBinder, boolean);
     public abstract void scheduleStopService(android.os.IBinder);
@@ -3304,7 +3326,7 @@
     public android.app.Instrumentation$ActivityResult execStartActivity(android.content.Context, android.os.IBinder, android.os.IBinder, android.app.Activity, android.content.Intent, int, android.os.Bundle);
     public android.app.Instrumentation$ActivityResult execStartActivity(android.content.Context, android.os.IBinder, android.os.IBinder, java.lang.String, android.content.Intent, int, android.os.Bundle);
     public android.app.Instrumentation$ActivityResult execStartActivity(android.content.Context, android.os.IBinder, android.os.IBinder, java.lang.String, android.content.Intent, int, android.os.Bundle, android.os.UserHandle);
-    public android.app.Instrumentation$ActivityResult execStartActivityAsCaller(android.content.Context, android.os.IBinder, android.os.IBinder, android.app.Activity, android.content.Intent, int, android.os.Bundle, android.os.IBinder, boolean, int);
+    public android.app.Instrumentation$ActivityResult execStartActivityAsCaller(android.content.Context, android.os.IBinder, android.os.IBinder, android.app.Activity, android.content.Intent, int, android.os.Bundle, boolean, int);
     public void execStartActivityFromAppTask(android.content.Context, android.os.IBinder, android.app.IAppTask, android.content.Intent, android.os.Bundle);
     public void finish(int, android.os.Bundle);
     public android.os.Bundle getAllocCounts();
@@ -3632,6 +3654,7 @@
 
     public static android.os.Parcelable$Creator CREATOR;
     public static int SEMANTIC_ACTION_ARCHIVE;
+    public static int SEMANTIC_ACTION_CALL;
     public static int SEMANTIC_ACTION_DELETE;
     public static int SEMANTIC_ACTION_MARK_AS_READ;
     public static int SEMANTIC_ACTION_MARK_AS_UNREAD;
@@ -4281,6 +4304,7 @@
     public static int ACTIVITY_TYPE_STANDARD;
     public static int ACTIVITY_TYPE_UNDEFINED;
     public static android.os.Parcelable$Creator CREATOR;
+    public static int PINNED_WINDOWING_MODE_ELEVATION_IN_DIP;
     public static int WINDOWING_MODE_FREEFORM;
     public static int WINDOWING_MODE_FULLSCREEN;
     public static int WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
@@ -4373,6 +4397,7 @@
     public java.lang.String getIdEntry();
     public java.lang.String getIdPackage();
     public java.lang.String getIdType();
+    public int getImportantForAutofill();
     public int getInputType();
     public int getLeft();
     public android.os.LocaleList getLocaleList();
@@ -4412,6 +4437,7 @@
     public boolean isSanitized();
     public boolean isSelected();
     public void setAutofillOverlay(android.app.assist.AssistStructure$AutofillOverlay);
+    public void setWebDomain(java.lang.String);
     public void updateAutofillValue(android.view.autofill.AutofillValue);
 
 
@@ -4441,6 +4467,7 @@
 
     public java.lang.String getDescription();
     public abstract int getTargetState();
+    public void recycle();
     public android.app.servertransaction.ActivityLifecycleItem setDescription(java.lang.String);
     public void writeToParcel(android.os.Parcel, int);
 
@@ -4494,9 +4521,11 @@
     public android.app.servertransaction.PendingTransactionActions$StopInfo getStopInfo();
     public void setCallOnPostCreate(boolean);
     public void setOldState(android.os.Bundle);
+    public void setReportRelaunchToWindowManager(boolean);
     public void setRestoreInstanceState(boolean);
     public void setStopInfo(android.app.servertransaction.PendingTransactionActions$StopInfo);
     public boolean shouldCallOnPostCreate();
+    public boolean shouldReportRelaunchToWindowManager();
     public boolean shouldRestoreInstanceState();
 
 
@@ -4922,6 +4951,7 @@
     public int getTargetSdkVersion();
     public java.lang.String getType(android.net.Uri);
     public android.graphics.drawable.Drawable getTypeDrawable(java.lang.String);
+    public int getUserId();
     public android.net.Uri insert(android.net.Uri, android.content.ContentValues);
     public static boolean invalidPeriodicExtras(android.os.Bundle);
     public static boolean isSyncActive(android.accounts.Account, java.lang.String);
@@ -5026,6 +5056,8 @@
     public static int SYNC_OBSERVER_TYPE_PENDING;
     public static int SYNC_OBSERVER_TYPE_SETTINGS;
     public static int SYNC_OBSERVER_TYPE_STATUS;
+    public static java.lang.String SYNC_VIRTUAL_EXTRAS_FORCE_BG_SYNC;
+    public static java.lang.String SYNC_VIRTUAL_EXTRAS_FORCE_FG_SYNC;
 }
 
 -keep class android.content.ContentResolver$OpenResourceIdResult {
@@ -5110,7 +5142,7 @@
     public abstract android.content.Context createDeviceProtectedStorageContext();
     public abstract android.content.Context createDisplayContext(android.view.Display);
     public abstract android.content.Context createPackageContext(java.lang.String, int);
-    public abstract android.content.Context createPackageContextAsUser(java.lang.String, int, android.os.UserHandle);
+    public android.content.Context createPackageContextAsUser(java.lang.String, int, android.os.UserHandle);
     public abstract java.lang.String[] databaseList();
     public abstract boolean deleteDatabase(java.lang.String);
     public abstract boolean deleteFile(java.lang.String);
@@ -5176,11 +5208,13 @@
     public java.lang.CharSequence getText(int);
     public abstract android.content.res.Resources$Theme getTheme();
     public int getThemeResId();
-    public abstract int getUserId();
+    public android.os.UserHandle getUser();
+    public int getUserId();
     public abstract android.graphics.drawable.Drawable getWallpaper();
     public abstract int getWallpaperDesiredMinimumHeight();
     public abstract int getWallpaperDesiredMinimumWidth();
     public abstract void grantUriPermission(java.lang.String, android.net.Uri, int);
+    public boolean isAutofillCompatibilityEnabled();
     public abstract boolean isCredentialProtectedStorage();
     public abstract boolean isDeviceProtectedStorage();
     public boolean isRestricted();
@@ -5228,6 +5262,7 @@
     public abstract void sendStickyOrderedBroadcast(android.content.Intent, android.content.BroadcastReceiver, android.os.Handler, int, java.lang.String, android.os.Bundle);
     public abstract void sendStickyOrderedBroadcastAsUser(android.content.Intent, android.os.UserHandle, android.content.BroadcastReceiver, android.os.Handler, int, java.lang.String, android.os.Bundle);
     public void setAutofillClient(android.view.autofill.AutofillManager$AutofillClient);
+    public void setAutofillCompatibilityEnabled(boolean);
     public abstract void setTheme(int);
     public abstract void setWallpaper(android.graphics.Bitmap);
     public abstract void setWallpaper(java.io.InputStream);
@@ -5482,6 +5517,7 @@
     public int getWallpaperDesiredMinimumHeight();
     public int getWallpaperDesiredMinimumWidth();
     public void grantUriPermission(java.lang.String, android.net.Uri, int);
+    public boolean isAutofillCompatibilityEnabled();
     public boolean isCredentialProtectedStorage();
     public boolean isDeviceProtectedStorage();
     public boolean isRestricted();
@@ -5524,6 +5560,7 @@
     public void sendStickyOrderedBroadcast(android.content.Intent, android.content.BroadcastReceiver, android.os.Handler, int, java.lang.String, android.os.Bundle);
     public void sendStickyOrderedBroadcastAsUser(android.content.Intent, android.os.UserHandle, android.content.BroadcastReceiver, android.os.Handler, int, java.lang.String, android.os.Bundle);
     public void setAutofillClient(android.view.autofill.AutofillManager$AutofillClient);
+    public void setAutofillCompatibilityEnabled(boolean);
     public void setTheme(int);
     public void setWallpaper(android.graphics.Bitmap);
     public void setWallpaper(java.io.InputStream);
@@ -5771,9 +5808,9 @@
     public boolean hasFileDescriptors();
     public boolean hasWebURI();
     public static boolean isAccessUriMode(int);
-    public boolean isBrowsableWebIntent();
     public boolean isDocument();
     public boolean isExcludingStopped();
+    public boolean isWebIntent();
     public static android.content.Intent makeMainActivity(android.content.ComponentName);
     public static android.content.Intent makeMainSelectorActivity(java.lang.String, java.lang.String);
     public static android.content.Intent makeRestartActivityTask(android.content.ComponentName);
@@ -5909,7 +5946,6 @@
     public static java.lang.String ACTION_DREAMING_STOPPED;
     public static java.lang.String ACTION_DYNAMIC_SENSOR_CHANGED;
     public static java.lang.String ACTION_EDIT;
-    public static java.lang.String ACTION_EPHEMERAL_RESOLVER_SETTINGS;
     public static java.lang.String ACTION_EXTERNAL_APPLICATIONS_AVAILABLE;
     public static java.lang.String ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE;
     public static java.lang.String ACTION_FACTORY_RESET;
@@ -5925,7 +5961,6 @@
     public static java.lang.String ACTION_INPUT_METHOD_CHANGED;
     public static java.lang.String ACTION_INSERT;
     public static java.lang.String ACTION_INSERT_OR_EDIT;
-    public static java.lang.String ACTION_INSTALL_EPHEMERAL_PACKAGE;
     public static java.lang.String ACTION_INSTALL_FAILURE;
     public static java.lang.String ACTION_INSTALL_INSTANT_APP_PACKAGE;
     public static java.lang.String ACTION_INSTALL_PACKAGE;
@@ -5995,7 +6030,6 @@
     public static java.lang.String ACTION_REBOOT;
     public static java.lang.String ACTION_REMOTE_INTENT;
     public static java.lang.String ACTION_REQUEST_SHUTDOWN;
-    public static java.lang.String ACTION_RESOLVE_EPHEMERAL_PACKAGE;
     public static java.lang.String ACTION_RESOLVE_INSTANT_APP_PACKAGE;
     public static java.lang.String ACTION_REVIEW_PERMISSIONS;
     public static java.lang.String ACTION_RUN;
@@ -6014,6 +6048,7 @@
     public static java.lang.String ACTION_SHOW_KEYBOARD_SHORTCUTS;
     public static java.lang.String ACTION_SHUTDOWN;
     public static java.lang.String ACTION_SIM_STATE_CHANGED;
+    public static java.lang.String ACTION_SPLIT_CONFIGURATION_CHANGED;
     public static java.lang.String ACTION_SYNC;
     public static java.lang.String ACTION_SYSTEM_TUTORIAL;
     public static java.lang.String ACTION_THERMAL_EVENT;
@@ -6146,6 +6181,10 @@
     public static java.lang.String EXTRA_INSTANT_APP_ACTION;
     public static java.lang.String EXTRA_INSTANT_APP_BUNDLES;
     public static java.lang.String EXTRA_INSTANT_APP_EXTRAS;
+    public static java.lang.String EXTRA_INSTANT_APP_FAILURE;
+    public static java.lang.String EXTRA_INSTANT_APP_HOSTNAME;
+    public static java.lang.String EXTRA_INSTANT_APP_SUCCESS;
+    public static java.lang.String EXTRA_INSTANT_APP_TOKEN;
     public static java.lang.String EXTRA_INTENT;
     public static java.lang.String EXTRA_IS_DATA_ROAMING_FROM_REGISTRATION;
     public static java.lang.String EXTRA_IS_USING_CARRIER_AGGREGATION;
@@ -7271,6 +7310,7 @@
     public abstract void removeSplit(java.lang.String);
     public abstract void setClientProgress(float);
     public abstract void transfer(java.lang.String);
+    public abstract void write(java.lang.String, long, long, android.os.ParcelFileDescriptor);
 
 
 }
@@ -7377,6 +7417,7 @@
     public abstract android.content.pm.KeySet getSigningKeySet(java.lang.String);
     public abstract android.content.pm.ParceledListSlice getSystemAvailableFeatures();
     public abstract java.lang.String[] getSystemSharedLibraryNames();
+    public abstract java.lang.String getSystemTextClassifierPackageName();
     public abstract int getUidForSharedUser(java.lang.String);
     public abstract android.content.pm.VerifierDeviceIdentity getVerifierDeviceIdentity();
     public abstract void grantDefaultPermissionsToEnabledCarrierApps(java.lang.String[], int);
@@ -7539,6 +7580,7 @@
     public int describeContents();
     public byte[][] getDigestBytes();
     public int[] getDigestPrefix();
+    public int[] getDigestPrefixSecure();
     public void writeToParcel(android.os.Parcel, int);
 
 
@@ -7659,6 +7701,7 @@
     public android.content.pm.InstrumentationInfo[] instrumentation;
     public boolean isStub;
     public long lastUpdateTime;
+    public java.lang.String overlayCategory;
     public int overlayPriority;
     public java.lang.String overlayTarget;
     public java.lang.String packageName;
@@ -7749,6 +7792,7 @@
     public void setProgress(float);
     public void setStagingProgress(float);
     public void transfer(java.lang.String);
+    public void write(java.lang.String, long, long, android.os.ParcelFileDescriptor);
 
 
 }
@@ -8031,6 +8075,7 @@
     public abstract android.content.pm.KeySet getSigningKeySet(java.lang.String);
     public abstract android.content.pm.FeatureInfo[] getSystemAvailableFeatures();
     public abstract java.lang.String[] getSystemSharedLibraryNames();
+    public java.lang.String getSystemTextClassifierPackageName();
     public abstract java.lang.CharSequence getText(java.lang.String, int, android.content.pm.ApplicationInfo);
     public abstract int getUidForSharedUser(java.lang.String);
     public abstract android.graphics.drawable.Drawable getUserBadgeForDensity(android.os.UserHandle, int);
@@ -8038,6 +8083,7 @@
     public abstract android.graphics.drawable.Drawable getUserBadgedDrawableForDensity(android.graphics.drawable.Drawable, android.os.UserHandle, android.graphics.Rect, int);
     public abstract android.graphics.drawable.Drawable getUserBadgedIcon(android.graphics.drawable.Drawable, android.os.UserHandle);
     public abstract java.lang.CharSequence getUserBadgedLabel(java.lang.CharSequence, android.os.UserHandle);
+    public int getUserId();
     public abstract android.content.pm.VerifierDeviceIdentity getVerifierDeviceIdentity();
     public abstract android.content.res.XmlResourceParser getXml(java.lang.String, int, android.content.pm.ApplicationInfo);
     public abstract void grantRuntimePermission(java.lang.String, java.lang.String, android.os.UserHandle);
@@ -8158,6 +8204,7 @@
     public static java.lang.String FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
     public static java.lang.String FEATURE_ADOPTABLE_STORAGE;
     public static java.lang.String FEATURE_APP_WIDGETS;
+    public static java.lang.String FEATURE_ASSIST_GESTURE;
     public static java.lang.String FEATURE_AUDIO_LOW_LATENCY;
     public static java.lang.String FEATURE_AUDIO_OUTPUT;
     public static java.lang.String FEATURE_AUDIO_PRO;
@@ -8537,6 +8584,8 @@
     public int calculateFootprint();
     public int describeContents();
     public static int fixProtectionLevel(int);
+    public int getProtection();
+    public int getProtectionFlags();
     public boolean isAppOp();
     public java.lang.CharSequence loadDescription(android.content.pm.PackageManager);
     public static java.lang.String protectionToString(int);
@@ -8560,6 +8609,7 @@
     public static int PROTECTION_FLAG_RUNTIME_ONLY;
     public static int PROTECTION_FLAG_SETUP;
     public static int PROTECTION_FLAG_SYSTEM;
+    public static int PROTECTION_FLAG_SYSTEM_TEXT_CLASSIFIER;
     public static int PROTECTION_FLAG_VENDOR_PRIVILEGED;
     public static int PROTECTION_FLAG_VERIFIER;
     public static int PROTECTION_MASK_BASE;
@@ -9395,6 +9445,7 @@
 -keep class android.content.res.XmlResourceParser {
 
     public abstract void close();
+    public abstract java.lang.String getAttributeNamespace(int);
 
 
 }
@@ -9957,6 +10008,7 @@
     public void drawVertices(android.graphics.Canvas$VertexMode, int, float[], int, float[], int, int[], int, short[], int, int, android.graphics.Paint);
     public boolean isHardwareAccelerated();
     public boolean isHwBitmapsInSwModeEnabled();
+    protected void onHwBitmapInSwMode();
     public void setHwBitmapsInSwModeEnabled(boolean);
     protected void throwIfCannotDraw(android.graphics.Bitmap);
 
@@ -9987,6 +10039,8 @@
     public static android.graphics.Bitmap createBitmap(android.util.DisplayMetrics, int[], int, int, int, int, android.graphics.Bitmap$Config);
     public static android.graphics.Bitmap createBitmap(int[], int, int, android.graphics.Bitmap$Config);
     public static android.graphics.Bitmap createBitmap(android.util.DisplayMetrics, int[], int, int, android.graphics.Bitmap$Config);
+    public static android.graphics.Bitmap createBitmap(android.graphics.Picture);
+    public static android.graphics.Bitmap createBitmap(android.graphics.Picture, int, int, android.graphics.Bitmap$Config);
     public android.graphics.GraphicBuffer createGraphicBufferHandle();
     public static android.graphics.Bitmap createHardwareBitmap(android.graphics.GraphicBuffer);
     public static android.graphics.Bitmap createScaledBitmap(android.graphics.Bitmap, int, int, boolean);
@@ -10020,6 +10074,7 @@
     public boolean isMutable();
     public boolean isPremultiplied();
     public boolean isRecycled();
+    public void makeImmutable();
     public void prepareToDraw();
     public void reconfigure(int, int, android.graphics.Bitmap$Config);
     public void recycle();
@@ -10227,6 +10282,7 @@
     public void scale(float, float);
     public void scale(float, float, float, float);
     public void setBitmap(android.graphics.Bitmap);
+    public static void setCompatibilityVersion(int);
     public void setDensity(int);
     public void setDrawFilter(android.graphics.DrawFilter);
     public void setMatrix(android.graphics.Matrix);
@@ -10479,7 +10535,6 @@
     public boolean addFont(java.lang.String, int, android.graphics.fonts.FontVariationAxis[], int, int);
     public boolean addFontFromAssetManager(android.content.res.AssetManager, java.lang.String, int, boolean, int, int, int, android.graphics.fonts.FontVariationAxis[]);
     public boolean addFontFromBuffer(java.nio.ByteBuffer, int, android.graphics.fonts.FontVariationAxis[], int, int);
-    public void allowUnsupportedFont();
     protected void finalize();
     public boolean freeze();
 
@@ -10726,6 +10781,7 @@
     public int breakText(java.lang.String, boolean, float, float[]);
     public void clearShadowLayer();
     public float descent();
+    public boolean equalsForTextMeasurement(android.graphics.Paint);
     public int getAlpha();
     public int getBidiFlags();
     public int getColor();
@@ -11059,6 +11115,7 @@
     protected void finalize();
     public int getHeight();
     public int getWidth();
+    public boolean requiresHardwareAcceleration();
     public void writeToStream(java.io.OutputStream);
 
 
@@ -11684,6 +11741,24 @@
 
 }
 
+-keep class android.hardware.display.AmbientBrightnessDayStats {
+    <init>(java.time.LocalDate, float[]);
+    <init>(java.time.LocalDate, float[], float[]);
+
+    public int describeContents();
+    public boolean equals(java.lang.Object);
+    public float[] getBucketBoundaries();
+    public java.time.LocalDate getLocalDate();
+    public float[] getStats();
+    public int hashCode();
+    public void log(float, float);
+    public java.lang.String toString();
+    public void writeToParcel(android.os.Parcel, int);
+
+
+    public static android.os.Parcelable$Creator CREATOR;
+}
+
 -keep class android.hardware.display.BrightnessChangeEvent {
     <init>(android.hardware.display.BrightnessChangeEvent, boolean);
 
@@ -11695,11 +11770,14 @@
     public float batteryLevel;
     public float brightness;
     public int colorTemperature;
+    public boolean isDefaultBrightnessConfig;
+    public boolean isUserSetBrightness;
     public float lastBrightness;
     public long[] luxTimestamps;
     public float[] luxValues;
     public boolean nightMode;
     public java.lang.String packageName;
+    public float powerBrightnessFactor;
     public long timeStamp;
     public int userId;
 }
@@ -11727,6 +11805,7 @@
     public android.hardware.display.VirtualDisplay createVirtualDisplay(android.media.projection.MediaProjection, java.lang.String, int, int, int, android.view.Surface, int, android.hardware.display.VirtualDisplay$Callback, android.os.Handler, java.lang.String);
     public void disconnectWifiDisplay();
     public void forgetWifiDisplay(java.lang.String);
+    public java.util.List getAmbientBrightnessStats();
     public java.util.List getBrightnessEvents();
     public android.view.Display getDisplay(int);
     public android.view.Display[] getDisplays();
@@ -11775,6 +11854,7 @@
     public android.hardware.display.VirtualDisplay createVirtualDisplay(android.content.Context, android.media.projection.MediaProjection, java.lang.String, int, int, int, android.view.Surface, int, android.hardware.display.VirtualDisplay$Callback, android.os.Handler, java.lang.String);
     public void disconnectWifiDisplay();
     public void forgetWifiDisplay(java.lang.String);
+    public java.util.List getAmbientBrightnessStats();
     public java.util.List getBrightnessEvents(java.lang.String);
     public android.view.Display getCompatibleDisplay(int, android.view.DisplayAdjustments);
     public android.view.Display getCompatibleDisplay(int, android.content.res.Resources);
@@ -12146,6 +12226,7 @@
     public static int ENCODING_DTS;
     public static int ENCODING_DTS_HD;
     public static int ENCODING_E_AC3;
+    public static int ENCODING_E_AC3_JOC;
     public static int ENCODING_IEC61937;
     public static int ENCODING_INVALID;
     public static int ENCODING_MP3;
@@ -12231,6 +12312,7 @@
     public void addOnRoutingChangedListener(android.media.AudioRouting$OnRoutingChangedListener, android.os.Handler);
     public void addOnRoutingChangedListener(android.media.AudioRecord$OnRoutingChangedListener, android.os.Handler);
     protected void finalize();
+    public java.util.List getActiveMicrophones();
     public int getAudioFormat();
     public int getAudioSessionId();
     public int getAudioSource();
@@ -12415,6 +12497,50 @@
 
     public static int SYNC_EVENT_NONE;
     public static int SYNC_EVENT_PRESENTATION_COMPLETE;
+}
+
+-keep class android.media.MicrophoneInfo {
+
+    public java.lang.String getAddress();
+    public java.util.List getChannelMapping();
+    public java.lang.String getDescription();
+    public int getDirectionality();
+    public java.util.List getFrequencyResponse();
+    public int getGroup();
+    public int getId();
+    public int getIndexInTheGroup();
+    public int getInternalDeviceType();
+    public int getLocation();
+    public float getMaxSpl();
+    public float getMinSpl();
+    public android.media.MicrophoneInfo$Coordinate3F getOrientation();
+    public android.media.MicrophoneInfo$Coordinate3F getPosition();
+    public float getSensitivity();
+    public int getType();
+    public void setId(int);
+
+
+    public static int CHANNEL_MAPPING_DIRECT;
+    public static int CHANNEL_MAPPING_PROCESSED;
+    public static int DIRECTIONALITY_BI_DIRECTIONAL;
+    public static int DIRECTIONALITY_CARDIOID;
+    public static int DIRECTIONALITY_HYPER_CARDIOID;
+    public static int DIRECTIONALITY_OMNI;
+    public static int DIRECTIONALITY_SUPER_CARDIOID;
+    public static int DIRECTIONALITY_UNKNOWN;
+    public static int LOCATION_MAINBODY;
+    public static int LOCATION_MAINBODY_MOVABLE;
+    public static int LOCATION_PERIPHERAL;
+    public static int LOCATION_UNKNOWN;
+}
+
+-keep class android.media.MicrophoneInfo$Coordinate3F {
+
+
+
+    public float x;
+    public float y;
+    public float z;
 }
 
 -keep class android.media.Rating {
@@ -14215,6 +14341,7 @@
     public int describeContents();
     public static android.os.VibrationEffect get(int);
     public static android.os.VibrationEffect get(int, boolean);
+    public static android.os.VibrationEffect get(android.net.Uri, android.content.Context);
     public abstract long getDuration();
     protected static int scale(int, float, int);
     public abstract void validate();
@@ -14224,8 +14351,12 @@
     public static int DEFAULT_AMPLITUDE;
     public static int EFFECT_CLICK;
     public static int EFFECT_DOUBLE_CLICK;
+    public static int EFFECT_HEAVY_CLICK;
+    public static int EFFECT_POP;
+    public static int EFFECT_THUD;
     public static int EFFECT_TICK;
     public static int MAX_AMPLITUDE;
+    public static int[] RINGTONES;
 }
 
 -keep class android.os.Vibrator {
@@ -14475,7 +14606,7 @@
 -keep class android.service.autofill.FieldClassification$Match {
     <init>(java.lang.String, float);
 
-    public java.lang.String getRemoteId();
+    public java.lang.String getCategoryId();
     public float getScore();
     public java.lang.String toString();
 
@@ -14524,13 +14655,14 @@
     public void dump(java.lang.String, java.io.PrintWriter);
     public static void dumpConstraints(java.lang.String, java.io.PrintWriter);
     public android.os.Bundle getAlgorithmArgs();
+    public java.lang.String[] getCategoryIds();
     public java.lang.String getFieldClassificationAlgorithm();
     public java.lang.String getId();
+    public static int getMaxCategoryCount();
     public static int getMaxFieldClassificationIdsSize();
     public static int getMaxUserDataSize();
     public static int getMaxValueLength();
     public static int getMinValueLength();
-    public java.lang.String[] getRemoteIds();
     public java.lang.String[] getValues();
     public java.lang.String toString();
     public void writeToParcel(android.os.Parcel, int);
@@ -15114,6 +15246,7 @@
     public abstract int getAttributeListValue(int, java.lang.String[], int);
     public abstract java.lang.String getAttributeName(int);
     public abstract int getAttributeNameResource(int);
+    public java.lang.String getAttributeNamespace(int);
     public abstract int getAttributeResourceValue(java.lang.String, java.lang.String, int);
     public abstract int getAttributeResourceValue(int, int);
     public abstract int getAttributeUnsignedIntValue(java.lang.String, java.lang.String, int);
@@ -15148,6 +15281,7 @@
     public static int DENSITY_360;
     public static int DENSITY_400;
     public static int DENSITY_420;
+    public static int DENSITY_440;
     public static int DENSITY_560;
     public static int DENSITY_DEFAULT;
     public static float DENSITY_DEFAULT_SCALE;
@@ -15946,11 +16080,12 @@
 }
 
 -keep class android.view.DisplayCutout {
-    <init>(android.graphics.Rect, android.graphics.Region);
+    <init>(android.graphics.Rect, android.graphics.Region, android.util.Size);
 
     public android.view.DisplayCutout calculateRelativeTo(android.graphics.Rect);
+    public android.view.DisplayCutout computeSafeInsets(int, int);
     public boolean equals(java.lang.Object);
-    public static android.view.DisplayCutout fromBoundingPolygon(java.util.List);
+    public static android.view.DisplayCutout fromBoundingRect(int, int, int, int);
     public static android.view.DisplayCutout fromBounds(android.graphics.Path);
     public static android.view.DisplayCutout fromResources(android.content.res.Resources, int);
     public android.graphics.Rect getBoundingRect();
@@ -15967,6 +16102,7 @@
     public void writeToProto(android.util.proto.ProtoOutputStream, long);
 
 
+    public static java.lang.String EMULATION_OVERLAY_CATEGORY;
     public static android.view.DisplayCutout NO_CUTOUT;
 }
 
@@ -16174,6 +16310,7 @@
 
     public abstract void onAnimationCanceled();
     public abstract void onAnimationStart(android.view.IRecentsAnimationController, android.view.RemoteAnimationTarget[]);
+    public abstract void onAnimationStart_New(android.view.IRecentsAnimationController, android.view.RemoteAnimationTarget[], android.graphics.Rect, android.graphics.Rect);
 
 
 }
@@ -17551,7 +17688,7 @@
 }
 
 -keep class android.view.RemoteAnimationTarget {
-    <init>(int, int, android.view.SurfaceControl, boolean, android.graphics.Rect, int, android.graphics.Point, android.graphics.Rect, android.app.WindowConfiguration);
+    <init>(int, int, android.view.SurfaceControl, boolean, android.graphics.Rect, android.graphics.Rect, int, android.graphics.Point, android.graphics.Rect, android.app.WindowConfiguration);
     <init>(android.os.Parcel);
 
     public int describeContents();
@@ -17562,6 +17699,7 @@
     public static int MODE_CLOSING;
     public static int MODE_OPENING;
     public android.graphics.Rect clipRect;
+    public android.graphics.Rect contentInsets;
     public boolean isTranslucent;
     public android.view.SurfaceControl leash;
     public int mode;
@@ -18445,8 +18583,9 @@
     public boolean isVerticalFadingEdgeEnabled();
     public boolean isVerticalScrollBarEnabled();
     protected boolean isVerticalScrollBarHidden();
-    protected boolean isVisibleToUser();
+    public boolean isVisibleToUser();
     protected boolean isVisibleToUser(android.graphics.Rect);
+    public boolean isVisibleToUserForAutofill(int);
     public void jumpDrawablesToCurrentState();
     public android.view.View keyboardNavigationClusterSearch(android.view.View, int);
     public void layout(int, int, int, int);
@@ -19879,6 +20018,7 @@
     public abstract void setHint(java.lang.CharSequence);
     public abstract void setHtmlInfo(android.view.ViewStructure$HtmlInfo);
     public abstract void setId(int, java.lang.String, java.lang.String, java.lang.String);
+    public void setImportantForAutofill(int);
     public abstract void setInputType(int);
     public abstract void setLocaleList(android.os.LocaleList);
     public abstract void setLongClickable(boolean);
@@ -20671,7 +20811,7 @@
     public static int TYPE_VOLUME_OVERLAY;
     public static int TYPE_WALLPAPER;
     public static int USER_ACTIVITY_TIMEOUT_CHANGED;
-    public int accessibilityIdOfAnchor;
+    public long accessibilityIdOfAnchor;
     public java.lang.CharSequence accessibilityTitle;
     public float alpha;
     public float buttonBrightness;
@@ -20952,6 +21092,7 @@
     public void setVisibleToUser(boolean);
     public java.lang.String toString();
     public void writeToParcel(android.os.Parcel, int);
+    public void writeToParcelNoRecycle(android.os.Parcel, int);
 
 
     public static int ACTION_ACCESSIBILITY_FOCUS;
@@ -21431,6 +21572,7 @@
     public void disableAutofillServices();
     public void disableOwnedAutofillServices();
     public void dump(java.lang.String, java.io.PrintWriter);
+    public void enableCompatibilityMode();
     public android.content.ComponentName getAutofillServiceComponentName();
     public java.util.List getAvailableFieldClassificationAlgorithms();
     public static int getDatasetIdFromAuthenticationId(int);
@@ -21442,19 +21584,21 @@
     public boolean hasAutofillFeature();
     public boolean hasEnabledAutofillServices();
     public boolean isAutofillSupported();
+    public boolean isCompatibilityModeEnabledLocked();
     public boolean isEnabled();
     public boolean isFieldClassificationEnabled();
     public static int makeAuthenticationId(int, int);
     public void notifyValueChanged(android.view.View);
     public void notifyValueChanged(android.view.View, int, android.view.autofill.AutofillValue);
     public void notifyViewClicked(android.view.View);
+    public void notifyViewClicked(android.view.View, int);
     public void notifyViewEntered(android.view.View);
     public void notifyViewEntered(android.view.View, int, android.graphics.Rect);
     public void notifyViewExited(android.view.View);
     public void notifyViewExited(android.view.View, int);
     public void notifyViewVisibilityChanged(android.view.View, boolean);
     public void notifyViewVisibilityChanged(android.view.View, int, boolean);
-    public void onActivityFinished();
+    public void onActivityFinishing();
     public void onAuthenticationResult(int, android.content.Intent, android.view.View);
     public void onCreate(android.os.Bundle);
     public void onInvisibleForAutofill();
@@ -21510,17 +21654,21 @@
 
 -keep class android.view.autofill.AutofillManager$AutofillClient {
 
-    public abstract void autofillCallbackAuthenticate(int, android.content.IntentSender, android.content.Intent);
-    public abstract boolean autofillCallbackRequestHideFillUi();
-    public abstract boolean autofillCallbackRequestShowFillUi(android.view.View, int, int, android.graphics.Rect, android.view.autofill.IAutofillWindowPresenter);
-    public abstract void autofillCallbackResetableStateAvailable();
-    public abstract android.view.View findViewByAutofillIdTraversal(int);
-    public abstract android.view.View[] findViewsByAutofillIdTraversal(int[]);
-    public abstract android.content.ComponentName getComponentName();
-    public abstract boolean[] getViewVisibility(int[]);
+    public abstract void autofillClientAuthenticate(int, android.content.IntentSender, android.content.Intent);
+    public abstract android.view.View autofillClientFindViewByAccessibilityIdTraversal(int, int);
+    public abstract android.view.View autofillClientFindViewByAutofillIdTraversal(android.view.autofill.AutofillId);
+    public abstract android.view.View[] autofillClientFindViewsByAutofillIdTraversal(android.view.autofill.AutofillId[]);
+    public abstract android.os.IBinder autofillClientGetActivityToken();
+    public abstract android.content.ComponentName autofillClientGetComponentName();
+    public abstract boolean[] autofillClientGetViewVisibility(android.view.autofill.AutofillId[]);
+    public abstract boolean autofillClientIsFillUiShowing();
+    public abstract boolean autofillClientIsVisibleForAutofill();
+    public abstract boolean autofillClientRequestHideFillUi();
+    public abstract boolean autofillClientRequestShowFillUi(android.view.View, int, int, android.graphics.Rect, android.view.autofill.IAutofillWindowPresenter);
+    public abstract void autofillClientResetableStateAvailable();
+    public abstract void autofillClientRunOnUiThread(java.lang.Runnable);
+    public abstract boolean autofillIsCompatibilityModeEnabled();
     public abstract boolean isDisablingEnterExitEventForAutofill();
-    public abstract boolean isVisibleForAutofill();
-    public abstract void runOnUiThread(java.lang.Runnable);
 
 
 }
@@ -21571,8 +21719,8 @@
     public abstract void setAuthenticationResult(android.os.Bundle, int, int, int);
     public abstract void setHasCallback(int, int, boolean);
     public abstract void setUserData(android.service.autofill.UserData);
-    public abstract int startSession(android.os.IBinder, android.os.IBinder, android.view.autofill.AutofillId, android.graphics.Rect, android.view.autofill.AutofillValue, int, boolean, int, android.content.ComponentName);
-    public abstract int updateOrRestartSession(android.os.IBinder, android.os.IBinder, android.view.autofill.AutofillId, android.graphics.Rect, android.view.autofill.AutofillValue, int, boolean, int, android.content.ComponentName, int, int);
+    public abstract int startSession(android.os.IBinder, android.os.IBinder, android.view.autofill.AutofillId, android.graphics.Rect, android.view.autofill.AutofillValue, int, boolean, int, android.content.ComponentName, boolean);
+    public abstract int updateOrRestartSession(android.os.IBinder, android.os.IBinder, android.view.autofill.AutofillId, android.graphics.Rect, android.view.autofill.AutofillValue, int, boolean, int, android.content.ComponentName, int, int, boolean);
     public abstract void updateSession(int, android.view.autofill.AutofillId, android.graphics.Rect, android.view.autofill.AutofillValue, int, int, int);
 
 
@@ -22374,6 +22522,13 @@
 
 }
 
+-keep class com.android.internal.app.IAppOpsActiveCallback {
+
+    public abstract void opActiveChanged(int, int, java.lang.String, boolean);
+
+
+}
+
 -keep class com.android.internal.app.IAppOpsCallback {
 
     public abstract void opChanged(int, int, java.lang.String);
@@ -22403,7 +22558,9 @@
     public abstract void setUserRestriction(int, boolean, android.os.IBinder, int, java.lang.String[]);
     public abstract void setUserRestrictions(android.os.Bundle, android.os.IBinder, int);
     public abstract int startOperation(android.os.IBinder, int, int, java.lang.String);
+    public abstract void startWatchingActive(int[], com.android.internal.app.IAppOpsActiveCallback);
     public abstract void startWatchingMode(int, java.lang.String, com.android.internal.app.IAppOpsCallback);
+    public abstract void stopWatchingActive(com.android.internal.app.IAppOpsActiveCallback);
     public abstract void stopWatchingMode(com.android.internal.app.IAppOpsCallback);
 
 

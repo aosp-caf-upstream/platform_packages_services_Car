@@ -19,12 +19,16 @@ package com.android.car;
 import android.car.hardware.CarSensorEvent;
 import android.car.hardware.CarSensorManager;
 import android.car.hardware.ICarSensorEventListener;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.util.AtomicFile;
 import android.util.JsonReader;
 import android.util.JsonWriter;
@@ -45,8 +49,7 @@ import java.util.List;
  * This service stores the last known location from {@link LocationManager} when a car is parked
  * and restores the location when the car is powered on.
  */
-public class CarLocationService implements CarServiceBase,
-        CarPowerManagementService.PowerEventProcessingHandler {
+public class CarLocationService extends BroadcastReceiver implements CarServiceBase {
     private static String TAG = "CarLocationService";
     private static String FILENAME = "location_cache.json";
     private static final boolean DBG = false;
@@ -55,18 +58,15 @@ public class CarLocationService implements CarServiceBase,
     private final Object mLock = new Object();
 
     private final Context mContext;
-    private final CarPowerManagementService mPowerManagementService;
     private final CarSensorService mCarSensorService;
     private final CarSensorEventListener mCarSensorEventListener;
     private int mTaskCount = 0;
     private HandlerThread mHandlerThread;
     private Handler mHandler;
 
-    public CarLocationService(Context context,
-            CarPowerManagementService powerManagementService, CarSensorService carSensorService) {
+    public CarLocationService(Context context, CarSensorService carSensorService) {
         logd("constructed");
         mContext = context;
-        mPowerManagementService = powerManagementService;
         mCarSensorService = carSensorService;
         mCarSensorEventListener = new CarSensorEventListener();
     }
@@ -74,7 +74,11 @@ public class CarLocationService implements CarServiceBase,
     @Override
     public void init() {
         logd("init");
-        mPowerManagementService.registerPowerEventProcessingHandler(this);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_LOCKED_BOOT_COMPLETED);
+        filter.addAction(LocationManager.MODE_CHANGED_ACTION);
+        filter.addAction(LocationManager.GPS_ENABLED_CHANGE_ACTION);
+        mContext.registerReceiver(this, filter);
         mCarSensorService.registerOrUpdateSensorListener(
                 CarSensorManager.SENSOR_TYPE_IGNITION_STATE, 0, mCarSensorEventListener);
     }
@@ -84,31 +88,40 @@ public class CarLocationService implements CarServiceBase,
         logd("release");
         mCarSensorService.unregisterSensorListener(CarSensorManager.SENSOR_TYPE_IGNITION_STATE,
                 mCarSensorEventListener);
+        mContext.unregisterReceiver(this);
     }
 
     @Override
     public void dump(PrintWriter writer) {
         writer.println(TAG);
         writer.println("Context: " + mContext);
-        writer.println("PowerManagementService: " + mPowerManagementService);
         writer.println("CarSensorService: " + mCarSensorService);
     }
 
     @Override
-    public void onPowerOn(boolean displayOn) {
-        logd("onPowerOn");
-        asyncOperation(() -> loadLocation());
-    }
-
-    @Override
-    public long onPrepareShutdown(boolean shuttingDown) {
-        logd("onPrepareShutdown");
-        return 0;
-    }
-
-    @Override
-    public int getWakeupTime() {
-        return 0;
+    public void onReceive(Context context, Intent intent) {
+        logd("onReceive" + intent);
+        String action = intent.getAction();
+        if (action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
+            asyncOperation(() -> loadLocation());
+        } else {
+            LocationManager locationManager =
+                    (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+            if (action == LocationManager.MODE_CHANGED_ACTION) {
+                boolean locationEnabled = locationManager.isLocationEnabled();
+                logd("isLocationEnabled(): " + locationEnabled);
+                if (!locationEnabled) {
+                    asyncOperation(() -> deleteCacheFile());
+                }
+            } else if (action == LocationManager.GPS_ENABLED_CHANGE_ACTION) {
+                boolean gpsEnabled =
+                        locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                logd("isProviderEnabled('gps'): " + gpsEnabled);
+                if (!gpsEnabled) {
+                    asyncOperation(() -> deleteCacheFile());
+                }
+            }
+        }
     }
 
     private void storeLocation() {
@@ -117,6 +130,7 @@ public class CarLocationService implements CarServiceBase,
         Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (location == null) {
             logd("Not storing null location");
+            deleteCacheFile();
         } else {
             logd("Storing location: " + location);
             AtomicFile atomicFile = new AtomicFile(mContext.getFileStreamPath(FILENAME));
@@ -156,7 +170,7 @@ public class CarLocationService implements CarServiceBase,
                     jsonWriter.name("isFromMockProvider").value(true);
                 }
                 jsonWriter.name("elapsedTime").value(location.getElapsedRealtimeNanos());
-                jsonWriter.name("time").value(location.getTime());
+                jsonWriter.name("captureTime").value(location.getTime());
                 jsonWriter.endObject();
                 jsonWriter.close();
                 atomicFile.finishWrite(fos);
@@ -168,8 +182,6 @@ public class CarLocationService implements CarServiceBase,
     }
 
     private void loadLocation() {
-        LocationManager locationManager =
-                (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         Location location = new Location((String) null);
         AtomicFile atomicFile = new AtomicFile(mContext.getFileStreamPath(FILENAME));
         try {
@@ -202,7 +214,7 @@ public class CarLocationService implements CarServiceBase,
                     location.setIsFromMockProvider(reader.nextBoolean());
                 } else if (name.equals("elapsedTime")) {
                     location.setElapsedRealtimeNanos(reader.nextLong());
-                } else if (name.equals("time")) {
+                } else if (name.equals("captureTime")) {
                     location.setTime(reader.nextLong());
                 } else {
                     reader.skipValue();
@@ -210,10 +222,18 @@ public class CarLocationService implements CarServiceBase,
             }
             reader.endObject();
             fis.close();
+            logd("Loaded location from " + location.getTime());
+            long currentTime = System.currentTimeMillis();
+            long elapsedTime = SystemClock.elapsedRealtimeNanos();
+            location.setTime(currentTime);
+            location.setElapsedRealtimeNanos(elapsedTime);
             if (location.isComplete()) {
-                locationManager.injectLocation(location);
-                logd("Loaded location: " + location);
+                LocationManager locationManager =
+                        (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+                boolean success = locationManager.injectLocation(location);
+                logd("Injected location " + location + " with result " + success);
             }
+            deleteCacheFile();
         } catch (FileNotFoundException e) {
             Log.d(TAG, "Location cache file not found.");
         } catch (IOException e) {
@@ -221,6 +241,11 @@ public class CarLocationService implements CarServiceBase,
         } catch (NumberFormatException | IllegalStateException e) {
             Log.e(TAG, "Unexpected format", e);
         }
+    }
+
+    private void deleteCacheFile() {
+        logd("Deleting cache file");
+        mContext.deleteFile(FILENAME);
     }
 
     @VisibleForTesting
