@@ -15,14 +15,11 @@
  */
 package com.android.car.trust;
 
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattService;
-import android.content.Context;
-
 import java.nio.ByteBuffer;
-import java.util.UUID;
 
 public class Utils {
+
+    public static final String LOG_TAG = "CarTrustAgentService";
 
     public static byte[] getBytes(long l) {
         ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE / Byte.SIZE);
@@ -35,10 +32,5 @@ public class Utils {
         buffer.put(bytes);
         buffer.flip();
         return buffer.getLong();
-    }
-
-    public static BluetoothGattCharacteristic getCharacteristic(int uuidRes,
-            BluetoothGattService service, Context context) {
-        return service.getCharacteristic(UUID.fromString(context.getString(uuidRes)));
     }
 }
