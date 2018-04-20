@@ -16,117 +16,51 @@
 package com.android.car.pm;
 
 import android.app.Activity;
-import android.car.Car;
-import android.car.CarNotConnectedException;
-import android.car.content.pm.CarPackageManager;
 import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
+import android.widget.TextView;
 
-import com.android.car.CarLog;
 import com.android.car.R;
 
 /**
  * Default activity that will be launched when the current foreground activity is not allowed.
  * Additional information on blocked Activity will be passed as extra in Intent
- * via {@link #INTENT_KEY_BLOCKED_ACTIVITY} key. *
+ * via {@link #INTENT_KEY_BLOCKED_ACTIVITY} key.
  */
 public class ActivityBlockingActivity extends Activity {
-    private static final boolean DBG = false;
     public static final String INTENT_KEY_BLOCKED_ACTIVITY = "blocked_activity";
-    private static final long AUTO_DISMISS_TIME_MS = 3000;
-    private Handler mHandler;
-    private Button mExitButton;
-    private Car mCar;
-    private boolean mExitRequested;
-    private final Runnable mFinishRunnable = () -> handleFinish();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blocking);
-        mHandler = new Handler(Looper.getMainLooper());
-        mExitButton = (Button) findViewById(R.id.botton_exit_now);
-        mExitButton.setOnClickListener((View v) -> handleFinish());
-        mCar = Car.createCar(this, new ServiceConnection() {
 
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                if (mExitRequested) {
-                    handleFinish();
-                }
-            }
+        String blockedActivity = getIntent().getStringExtra(INTENT_KEY_BLOCKED_ACTIVITY);
 
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-            }
-
-        });
-        mCar.connect();
+        TextView blockedTitle = findViewById(R.id.activity_blocked_title);
+        blockedTitle.setText(getString(R.string.activity_blocked_string,
+                findBlockedApplicationLabel(blockedActivity)));
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mHandler.postDelayed(mFinishRunnable, AUTO_DISMISS_TIME_MS);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mHandler.removeCallbacks(mFinishRunnable);
-        mCar.disconnect();
-    }
-
-    private void handleFinish() {
-        if (!mCar.isConnected()) {
-            mExitRequested = true;
-            return;
-        }
-        if (isFinishing()) {
-            return;
-        }
+    /**
+     * Returns the application label of blockedActivity. If that fails, the original activity will
+     * be returned.
+     */
+    private String findBlockedApplicationLabel(String blockedActivity) {
+        String label = blockedActivity;
+        // Attempt to update blockedActivity name to application label.
         try {
-            CarPackageManager carPm = (CarPackageManager) mCar.getCarManager(Car.PACKAGE_SERVICE);
-            // finish itself only when it will not lead into another blocking
-            if (carPm.isActivityBackedBySafeActivity(getComponentName())) {
-                if (DBG) {
-                    Log.d(CarLog.TAG_AM, "New Activity is safe. No more blocking: "
-                            + getComponentName().getClassName());
-                }
-                finish();
-                return;
+            ApplicationInfo applicationInfo = getPackageManager().getApplicationInfo(
+                    ComponentName.unflattenFromString(blockedActivity).getPackageName(), 0);
+            CharSequence appLabel = getPackageManager().getApplicationLabel(applicationInfo);
+            if (appLabel != null) {
+                label = appLabel.toString();
             }
-            // back activity is not safe either. Now try home
-            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
-            homeIntent.addCategory(Intent.CATEGORY_HOME);
-            // Start a new task before launching the home activity.
-            homeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-            PackageManager pm = getPackageManager();
-            ComponentName homeComponent = homeIntent.resolveActivity(pm);
-            if (DBG) {
-                Log.d(CarLog.TAG_AM, "Launching home activity: " + homeComponent.getClassName());
-            }
-            if (carPm.isActivityDistractionOptimized(homeComponent.getPackageName(),
-                    homeComponent.getClassName())) {
-                startActivity(homeIntent);
-                finish();
-                return;
-            } else {
-                Log.w(CarLog.TAG_AM, "Home activity is not in white list. Keep blocking activity. "
-                        + ", Home Activity:" + homeComponent);
-            }
-        } catch (CarNotConnectedException e) {
-            Log.w(CarLog.TAG_AM, "Car service not available, will finish", e);
-            finish();
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
         }
+        return label;
     }
 }
